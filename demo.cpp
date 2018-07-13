@@ -39,8 +39,7 @@ void sendCEventLogin(CEventLoginParams) {
     return Results::OK;
 }
 
-Observable<Result> recvEventAction(xmlNode) {
-    auto eventName = ...;
+void recvEventAction() {
     auto conn = ...;
     return conn.getRecvEvents().filter(e -> e.name == eventName).map(e -> ??);
 }
