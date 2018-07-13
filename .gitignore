@@ -1,0 +1,6 @@
+GTAGS
+GRTAGS
+GPATH
+.build
+.vscode
+node_modules

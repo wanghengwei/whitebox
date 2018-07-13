@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package x51;
+
+message ConnectParams {
+    string ip = 1;
+    int32 port = 2;
+}
+
+message ConnectResults {
+    bool ok = 1;
+}
+
+message Event1 {}
+message Event2 {}
+message Result {}
+
+service Broker {
+    rpc Connect (ConnectParams) returns (ConnectResults);
+
+    rpc SendEvent (Event1) returns (Result);
+    rpc SendEvent (Event2) returns (Result);
+}
