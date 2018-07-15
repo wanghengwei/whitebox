@@ -2,22 +2,27 @@ syntax = "proto3";
 
 package x51;
 
-message ConnectParams {
-    string ip = 1;
-    int32 port = 2;
+message Result {
+    int32 errorCode = 1;
+    string errorMessage = 2;
+    string category = 3;
 }
 
-message ConnectResults {
-    bool ok = 1;
+message ConnectionIdentity {
+    string account = 1;
+    string service = 2;
+    uint32 connectionIndex = 3;
 }
 
-message Event1 {}
-message Event2 {}
-message Result {}
+message SendEventParams {
+    ConnectionIdentity conn = 1;
+    string params = 2;
+}
 
-service Broker {
-    rpc Connect (ConnectParams) returns (ConnectResults);
+service SendBroker {
+    rpc SendCEventLogin (SendEventParams) returns (Result);
+}
 
-    rpc SendEvent (Event1) returns (Result);
-    rpc SendEvent (Event2) returns (Result);
+service RecvBroker {
+    rpc RecvCEventLoginRes (ConnectionIdentity) returns (Result);
 }

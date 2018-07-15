@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "fast-xml-parser": "^3.11.1",
     "grpc": "^1.13.0",
-    "rxjs": "^6.2.1"
+    "rxjs": "^6.2.1",
+    "xml2js": "^0.4.19"
   }
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<test_case>
+    <services>
+        <service name="User" skip_handshake="true"/>
+        <service name="Video" skip_handshake="false"/>
+    </services>
+    <template>
+        <action type="connect" conn="User" index="0"/>
+        <action type="send" name="CEventLogin" conn="User" index="0"/>
+        <action type="connect" conn="Video" index="0"/>
+    </template>
+</test_case>

@@ -12,10 +12,26 @@ init:
         type: string
 
 this will generating code:
-# CEventLogin.cpp
+# AUTOGEN CEventLogin.cpp
 void prepareCEventLogin(CEventLogin& ev) {
     ev.m_foo = 2;
     ev.m_bar = player.getData<string>("PlayerDataBar");
+}
+
+# AUTOGEN proto:
+service Broker {
+    ...
+
+    rpc sendCEventLogin(Params) return (Result)
+
+    ...
+}
+
+# AUTOGEN proto impl
+class BrokerImpl {
+    void sendCEventLogin(params) {
+        ...
+    }
 }
 
 */
@@ -24,6 +40,7 @@ void prepareCEventLogin(CEventLogin& ev) {
 
 # testcase.xml
 ...
+<connect conn="User"/>
 <send name="CEventLogin" conn="User"/>
 <recv name="CEventLoginRes" conn="User"/>
 ...
@@ -41,7 +58,8 @@ void sendCEventLogin(CEventLoginParams) {
 
 void recvEventAction() {
     auto conn = ...;
-    return conn.getRecvEvents().filter(e -> e.name == eventName).map(e -> ??);
+    conn.getRecvEvents().filter(e -> e.name == eventName).map(e -> ??).subscribe(??);
+    return;
 }
 
 # proto
