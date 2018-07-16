@@ -66,7 +66,8 @@ const xmlparser = require('fast-xml-parser');
 const grpc = require('grpc');
 
 var x51 = grpc.load(`${__dirname}/../protos/x51.proto`).x51;
-var broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
+var broker = new x51.SendBroker('localhost:12345', grpc.credentials.createInsecure());
+var recvBroker = new x51.RecvBroker('localhost:12345', grpc.credentials.createInsecure());
 
 function getJobDefs() {
     return rxjs.of({
@@ -106,13 +107,31 @@ class SendEventAction {
     }
 }
 
+class RecvEventAction {
+    constructor(eventName) {
+        this.eventName = eventName;
+    }
+
+    run(robot, stopNotifier) {
+        let f = (arg, cb) => recvBroker[`Recv${this.eventName}`](arg, cb);
+        return rxjs.bindCallback(f)({
+            account: "1212",
+            service: "User",
+            connectionIndex: 0,
+        })
+    }
+}
+
 class TestCase {
     constructor(def) {
         this.actions = [];
         // this.actions = [new SendEventAction("CEventLogin")];
         def.test_case.template.action.forEach(x => {
-            if (x["@_type"] == "send") {
+            let t = x["@_type"];
+            if (t == "send") {
                 this.actions.push(new SendEventAction(x["@_name"]));
+            } else if (t == "recv") {
+                this.actions.push(new RecvEventAction(x["@_name"]));
             }
         }, this);
     }

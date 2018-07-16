@@ -19,6 +19,11 @@ public:
 class Connection {
 public:
     void sendEvent(CEvent* ev) {}
+    void waitEvent(std::function<bool(const CEvent&)> cond, std::function<void()> cb) {
+        if (cond) {
+            cb();
+        }
+    }
 };
 
 class ConnectionManager {
@@ -32,6 +37,8 @@ private:
 
 class SendBrokerImpl : public SendBroker::Service {
 public:
+    SendBrokerImpl(ConnectionManager& mgr) : m_connMgr{mgr} {}
+
     ::grpc::Status SendCEventLogin(::grpc::ServerContext* context, const ::x51::SendEventParams* request, ::x51::Result* response) override {
         // response->set_ok(true);
         // response->set_category("");
@@ -42,7 +49,7 @@ public:
         rapidjson::Document doc;
         doc.Parse(params.c_str());
 
-        auto conn = connectionManager.findConnection(acc, srvName, connIdx);
+        auto conn = m_connMgr.findConnection(acc, srvName, connIdx);
 
         CEventLogin ev;
 
@@ -54,16 +61,66 @@ public:
         return grpc::Status::OK;
     }
 private:
-    ConnectionManager connectionManager;
+    ConnectionManager& m_connMgr;
 };
 
-void spawnRecvHandlers(RecvBroker::AsyncService& srv) {
-    srv.RequestRecvCEventLoginRes();
-}
+class AsyncCall {
+private:
+    enum class State {
+        CREATE, PROCESS, FINISH,
+    };
+public:
+    AsyncCall(RecvBroker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm) : m_srv{srv}, m_cq{cq}, m_connMgr{cm}, m_responder{&m_ctx} {
+        proceed();
+    }
+
+    ~AsyncCall() {
+        std::clog << "~AsyncCall()\n";
+    }
+
+    AsyncCall(AsyncCall&) = delete;
+    AsyncCall& operator=(AsyncCall&) = delete;
+
+    void proceed() {
+        if (m_state == State::CREATE) {
+            m_state = State::PROCESS;
+            m_srv->RequestRecvCEventLoginRes(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this); // <AUTOGEN>
+        } else if (m_state == State::PROCESS) {
+            new AsyncCall{m_srv, m_cq, m_connMgr};
+
+            std::string acc = m_request.account();
+            std::string srv = m_request.service();
+            int idx = m_request.connectionindex();
+            auto conn = m_connMgr.findConnection(acc, srv, idx);
+            m_state = State::FINISH;
+            conn->waitEvent([](const CEvent&) {
+                return true;
+            }, [this]() {
+                m_responder.Finish(m_reply, grpc::Status::OK, this);
+            }); // <AUTOGEN>
+        } else if (m_state == State::FINISH) {
+            delete this;
+        } else {
+            assert(false);
+        }
+    }
+private:
+    RecvBroker::AsyncService* m_srv;
+    grpc::ServerCompletionQueue* m_cq;
+    grpc::ServerContext m_ctx;
+    x51::ConnectionIdentity m_request;
+    x51::Result m_reply;
+    grpc::ServerAsyncResponseWriter<x51::Result> m_responder;
+    State m_state{State::CREATE};
+    ConnectionManager& m_connMgr;
+};
 
 int main() {
     std::string addr{"0.0.0.0:12345"};
-    SendBrokerImpl sendBroker;
+
+    ConnectionManager connMgr;
+
+    SendBrokerImpl sendBroker{connMgr};
     RecvBroker::AsyncService recvBroker;
     
     grpc::ServerBuilder builder;
@@ -74,15 +131,23 @@ int main() {
 
     std::unique_ptr<grpc::ServerCompletionQueue> cq = builder.AddCompletionQueue();
 
-    builder.BuildAndStart();
+    // std::clog << "cq is " << cq.get() << '\n';
+
+    auto server = builder.BuildAndStart();
 
     // spawn async request handlers
-    spawnRecvHandlers(recvBroker);
+    // spawnRecvHandlers(recvBroker);
+    new AsyncCall{&recvBroker, cq.get(), connMgr};
 
     void* tag;
     bool ok;
     while (true) {
-        cq->Next(&tag, &ok);
+        bool opened = cq->Next(&tag, &ok);
+        if (!opened) {
+            break;
+        }
+        AsyncCall* ac = static_cast<AsyncCall*>(tag);
+        ac->proceed();
     }
 
     return 0;
