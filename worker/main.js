@@ -66,8 +66,8 @@ const xmlparser = require('fast-xml-parser');
 const grpc = require('grpc');
 
 var x51 = grpc.load(`${__dirname}/../protos/x51.proto`).x51;
-var broker = new x51.SendBroker('localhost:12345', grpc.credentials.createInsecure());
-var recvBroker = new x51.RecvBroker('localhost:12345', grpc.credentials.createInsecure());
+var broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
+// var recvBroker = new x51.RecvBroker('localhost:12345', grpc.credentials.createInsecure());
 
 function getJobDefs() {
     return rxjs.of({
@@ -95,14 +95,9 @@ class SendEventAction {
         // send event ...
         let f = (arg, cb) => broker[`Send${this.eventName}`](arg, cb);
         return rxjs.bindCallback(f)({
-            conn: {
-                account: "1212",
-                service: "User",
-                connectionIndex: 0,
-            },
-            params: JSON.stringify({
-                roomId: 999,
-            }),
+            account: "1212",
+            service: "User",
+            connectionIndex: 0,
         });
     }
 }
@@ -113,7 +108,7 @@ class RecvEventAction {
     }
 
     run(robot, stopNotifier) {
-        let f = (arg, cb) => recvBroker[`Recv${this.eventName}`](arg, cb);
+        let f = (arg, cb) => broker[`Recv${this.eventName}`](arg, cb);
         return rxjs.bindCallback(f)({
             account: "1212",
             service: "User",
