@@ -1,64 +1,3 @@
-/* js
-
-while (running) {
-    let order = waitOrder();
-    let tc = findTestCase(order.testCaseId);
-    let robot = createRobot(order.account, order.params);
-    let job = new Job(tc, robot);
-    jobManager.add(job);
-
-    tc.run(robot, job.stop).subscribe(state => {
-        log(state);
-    }, err => {
-        job.markAsFailed();
-    });
-}
-
-class Job {
-
-}
-
-class TestCase {
-    function run(robot, stopSignal) {
-        actions.take_until(stopSignal).flat_map(a => {
-            return a.run(robot);
-        })
-    }
-}
-
-class SendAction {
-    function run(robot) {
-        let fn = findFunc(broker, `send${this.eventName}`);
-        return just(fn(this.params));
-    }
-}
-
-class RecvAction {
-    function run(robot) {
-        let fn = ...;
-        return fn(this.params) as observable;
-    }
-}
-
-*/
-
-/* c++
-class Broker {
-    Result Connect(param) {
-        auto srv = serverManager.getServer(serverName);
-        srv.connect(params);
-        onConnect(conn, err => connectionManager.addConnection(serverName, acc, conn));'
-        return connIdx;
-    }
-
-    Result RecvCEventInitConnRes(acc, srvName, idx) {
-        auto conn = connectionManager.findConnection(acc, srvName, idx);
-        conn.addWaitingEvent(eventId);
-        // async return
-    }
-}
-*/
-
 const rxjs = require('rxjs');
 const opts = require('rxjs/operators');
 const fs = require('fs');
@@ -66,9 +5,9 @@ const xmlparser = require('fast-xml-parser');
 const grpc = require('grpc');
 
 var x51 = grpc.load(`${__dirname}/../protos/x51.proto`).x51;
-var broker = new x51.SendBroker('localhost:12345', grpc.credentials.createInsecure());
-var recvBroker = new x51.RecvBroker('localhost:12345', grpc.credentials.createInsecure());
+var broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
 
+// get job definitions from network or local file or command line
 function getJobDefs() {
     return rxjs.of({
         account: "1000",
@@ -87,37 +26,35 @@ class Robot {
 }
 
 class SendEventAction {
-    constructor(eventName) {
+    constructor(eventName, srv, connIdx) {
         this.eventName = eventName;
+        this.serviceName = srv;
+        this.connectionIndex = connIdx;
     }
 
     run(robot, stopNotifier) {
-        // send event ...
         let f = (arg, cb) => broker[`Send${this.eventName}`](arg, cb);
         return rxjs.bindCallback(f)({
-            conn: {
-                account: "1212",
-                service: "User",
-                connectionIndex: 0,
-            },
-            params: JSON.stringify({
-                roomId: 999,
-            }),
+            account: robot.account,
+            service: this.serviceName,
+            connectionIndex: parseInt(this.connectionIndex),
         });
     }
 }
 
 class RecvEventAction {
-    constructor(eventName) {
+    constructor(eventName, srv, connIdx) {
         this.eventName = eventName;
+        this.serviceName = srv;
+        this.connectionIndex = connIdx;
     }
 
     run(robot, stopNotifier) {
-        let f = (arg, cb) => recvBroker[`Recv${this.eventName}`](arg, cb);
+        let f = (arg, cb) => broker[`Recv${this.eventName}`](arg, cb);
         return rxjs.bindCallback(f)({
-            account: "1212",
-            service: "User",
-            connectionIndex: 0,
+            account: robot.account,
+            service: this.serviceName,
+            connectionIndex: parseInt(this.connectionIndex),
         })
     }
 }
@@ -125,13 +62,12 @@ class RecvEventAction {
 class TestCase {
     constructor(def) {
         this.actions = [];
-        // this.actions = [new SendEventAction("CEventLogin")];
         def.test_case.template.action.forEach(x => {
             let t = x["@_type"];
             if (t == "send") {
-                this.actions.push(new SendEventAction(x["@_name"]));
+                this.actions.push(new SendEventAction(x["@_name"], x['@_service'], x['@_conn']));
             } else if (t == "recv") {
-                this.actions.push(new RecvEventAction(x["@_name"]));
+                this.actions.push(new RecvEventAction(x["@_name"], x['@_service'], x['@_conn']));
             }
         }, this);
     }
@@ -203,6 +139,4 @@ function main() {
     });
 }
 
-// getJobDefs().subscribe(console.log);
 main();
-// console.log(broker['SendCEventLogin']);

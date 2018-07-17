@@ -1,0 +1,13 @@
+type: SendEvent
+spec:
+  eventName: CEventLogin
+  params:
+  - field: m_roomId
+    value: "2123"
+    type: Int32
+
+---
+
+type: RecvEvent
+spec:
+  eventName: CEventLoginRes
