@@ -35,43 +35,33 @@ private:
     std::shared_ptr<Connection> conn{new Connection};
 };
 
-class BasicAsyncCall {
+class AsyncCall {
 public:
-    virtual ~BasicAsyncCall() {}
-
+    virtual ~AsyncCall() {}
     virtual void proceed() = 0;
 };
 
-template<typename C>
-class AsyncCall : public BasicAsyncCall {
+template<typename SubClass>
+class AsyncCallImpl : public AsyncCall {
 private:
     enum class State {
         CREATE, PROCESS, FINISH,
     };
 public:
-    AsyncCall(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm) : m_srv{srv}, m_cq{cq}, m_connMgr{cm}, m_responder{&m_ctx} {
-        // proceed();
+    AsyncCallImpl(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm) : m_srv{srv}, m_cq{cq}, m_connMgr{cm}, m_responder{&m_ctx} {
+        
     }
 
-    virtual ~AsyncCall() {
-        std::clog << "~AsyncCall()\n";
-    }
-
-    AsyncCall(AsyncCall&) = delete;
-    AsyncCall& operator=(AsyncCall&) = delete;
-
-    virtual void doRequest() = 0;
-    virtual void doReply(std::shared_ptr<Connection>) = 0;
+    AsyncCallImpl(AsyncCallImpl&) = delete;
+    AsyncCallImpl& operator=(AsyncCallImpl&) = delete;
 
     void proceed() override {
         if (m_state == State::CREATE) {
             m_state = State::PROCESS;
 
-            // !!!
-            // m_srv->RequestRecvCEventLoginRes(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this); // <AUTOGEN>
             doRequest();
         } else if (m_state == State::PROCESS) {
-            (new C{m_srv, m_cq, m_connMgr})->proceed();
+            (new SubClass{m_srv, m_cq, m_connMgr})->proceed();
 
             std::string acc = m_request.account();
             std::string srv = m_request.service();
@@ -79,19 +69,17 @@ public:
             auto conn = m_connMgr.findConnection(acc, srv, idx);
             m_state = State::FINISH;
 
-            // !!!
-            // conn->waitEvent([](const CEvent&) {
-            //     return true;
-            // }, [this]() {
-            //     m_responder.Finish(m_reply, grpc::Status::OK, this);
-            // }); // <AUTOGEN>
-            doReply(conn);
+            doReply();
         } else if (m_state == State::FINISH) {
             delete this;
         } else {
             assert(false);
         }
     }
+
+protected:
+    virtual void doRequest() = 0;
+    virtual void doReply() = 0;
 protected:
     Broker::AsyncService* m_srv;
     grpc::ServerCompletionQueue* m_cq;
@@ -103,19 +91,47 @@ protected:
     ConnectionManager& m_connMgr;
 };
 
-class SendCEventLogin : public AsyncCall<SendCEventLogin> {
+// **variation**
+class SendCEventLogin : public AsyncCallImpl<SendCEventLogin> {
 public:
-    using AsyncCall<SendCEventLogin>::AsyncCall;
-
+    using AsyncCallImpl<SendCEventLogin>::AsyncCallImpl;
+protected:
     void doRequest() override {
         m_srv->RequestSendCEventLogin(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
     }
 
-    void doReply(std::shared_ptr<Connection> conn) override {
+    void doReply() override {
+        std::string acc = m_request.account();
+        std::string srv = m_request.service();
+        int idx = m_request.connectionindex();
+        auto conn = m_connMgr.findConnection(acc, srv, idx);
         CEventLogin ev;
         ev.m_roomId = 1212;
         conn->sendEvent(&ev);
         m_responder.Finish(m_reply, grpc::Status::OK, this);
+    }
+};
+
+// **variation**
+class RecvCEventLoginRes : public AsyncCallImpl<RecvCEventLoginRes> {
+public:
+    using AsyncCallImpl<RecvCEventLoginRes>::AsyncCallImpl;
+protected:
+    void doRequest() override {
+        m_srv->RequestRecvCEventLoginRes(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
+    }
+
+    void doReply() override {
+        std::string acc = m_request.account();
+        std::string srv = m_request.service();
+        int idx = m_request.connectionindex();
+        auto conn = m_connMgr.findConnection(acc, srv, idx);
+        
+        conn->waitEvent([](const CEvent&) {
+            return true;
+        }, [this]() {
+            m_responder.Finish(m_reply, grpc::Status::OK, this);
+        });
     }
 };
 
@@ -124,24 +140,21 @@ int main() {
 
     ConnectionManager connMgr;
 
-    // BrokerImpl sendBroker{connMgr};
-    Broker::AsyncService recvBroker;
+    Broker::AsyncService broker;
     
     grpc::ServerBuilder builder;
     builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
     
-    // builder.RegisterService(&sendBroker);
-    builder.RegisterService(&recvBroker);
+    builder.RegisterService(&broker);
 
     std::unique_ptr<grpc::ServerCompletionQueue> cq = builder.AddCompletionQueue();
 
-    // std::clog << "cq is " << cq.get() << '\n';
-
     auto server = builder.BuildAndStart();
 
-    // spawn async request handlers
-    // spawnRecvHandlers(recvBroker);
-    (new SendCEventLogin{&recvBroker, cq.get(), connMgr})->proceed();
+    // **VARIATION**
+    (new SendCEventLogin{&broker, cq.get(), connMgr})->proceed();
+    (new RecvCEventLoginRes{&broker, cq.get(), connMgr})->proceed();
+    // ****
 
     void* tag;
     bool ok;
@@ -150,7 +163,7 @@ int main() {
         if (!opened) {
             break;
         }
-        BasicAsyncCall* ac = static_cast<BasicAsyncCall*>(tag);
+        AsyncCall* ac = static_cast<AsyncCall*>(tag);
         ac->proceed();
     }
 
