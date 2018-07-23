@@ -3,7 +3,7 @@ spec:
   eventName: CEventLogin
   params:
   - field: m_roomId
-    value: "2123"
+    valueFrom: "RoomId"
     type: Int32
 
 ---

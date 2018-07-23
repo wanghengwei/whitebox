@@ -4,3 +4,5 @@ GPATH
 .build
 .vscode
 node_modules
+
+autogen/

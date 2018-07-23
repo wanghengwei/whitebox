@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package x51;
+// package x51;
 
 message Result {
     int32 errorCode = 1;

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.11)
 
 set(PROTO_SOURCES
-    x51.grpc.pb.cc
-    x51.grpc.pb.h
-    x51.pb.cc
-    x51.pb.h
+    ${CMAKE_BINARY_DIR}/x51.grpc.pb.cc
+    ${CMAKE_BINARY_DIR}/x51.grpc.pb.h
+    ${CMAKE_BINARY_DIR}/x51.pb.cc
+    ${CMAKE_BINARY_DIR}/x51.pb.h
 )
 find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
 add_custom_command(OUTPUT ${PROTO_SOURCES}
@@ -13,6 +13,10 @@ add_custom_command(OUTPUT ${PROTO_SOURCES}
     DEPENDS ${CMAKE_SOURCE_DIR}/../protos/x51.proto
 )
 
-add_executable(broker main.cpp ${PROTO_SOURCES})
-target_link_libraries(broker grpc++_unsecure protobuf)
-target_include_directories(broker PRIVATE ${CMAKE_BINARY_DIR})
+add_library(proto ${PROTO_SOURCES})
+
+add_subdirectory(autogen)
+
+add_executable(broker main.cpp)
+target_link_libraries(broker autogen grpc++_unsecure protobuf)
+# target_include_directories(broker PRIVATE ${CMAKE_BINARY_DIR})
