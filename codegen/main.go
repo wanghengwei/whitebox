@@ -1,105 +1,51 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
 	"os"
+	"path"
 	"text/template"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/Masterminds/sprig"
+	"github.com/golang/glog"
+	"gopkg.in/yaml.v2"
 )
 
-const (
-	eventHpp = `
-	#pragma once
-	#include <x51.grpc.pb.h>
-	#include "../async_call.h"
-	void process{{.Spec.EventName}}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm);
-	`
-
-	sendEventCpp = `
-		{{with .Spec}}
-		#include "{{.EventName}}.h"
-		class Send{{.EventName}} : public AsyncCallImpl<Send{{.EventName}}> {
-		public:
-			using AsyncCallImpl<Send{{.EventName}}>::AsyncCallImpl;
-		protected:
-			void doRequest() override {
-				m_srv->RequestSend{{.EventName}}(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
-			}
-		
-			void doReply() override {
-				std::string acc = m_request.account();
-				std::string srv = m_request.service();
-				int idx = m_request.connectionindex();
-				auto conn = m_connMgr.findConnection(acc, srv, idx);
-				{{.EventName}} ev;
-				{{range .Params}}
-				ev.{{.Field}} = {{.Value}};
-				{{end}}
-				conn->sendEvent(&ev);
-				m_responder.Finish(m_reply, grpc::Status::OK, this);
-			}
-		};
-
-		void process{{.EventName}}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm) {
-			(new Send{{.EventName}}{srv, cq, cm})->proceed();
-		}
-		{{end}}
-	`
-
-	recvEventCpp = `
-		{{with .Spec}}
-		#include "{{.EventName}}.h"
-		class Recv{{.EventName}} : public AsyncCallImpl<Recv{{.EventName}}> {
-		public:
-			using AsyncCallImpl<Recv{{.EventName}}>::AsyncCallImpl;
-		protected:
-			void doRequest() override {
-				m_srv->RequestRecv{{.EventName}}(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
-			}
-		
-			void doReply() override {
-				std::string acc = m_request.account();
-				std::string srv = m_request.service();
-				int idx = m_request.connectionindex();
-				auto conn = m_connMgr.findConnection(acc, srv, idx);
-				
-				conn->waitEvent([](const CEvent&) {
-					return true;
-				}, [this]() {
-					m_responder.Finish(m_reply, grpc::Status::OK, this);
-				});
-			}
-		};
-		void process{{.EventName}}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm) {
-			(new Recv{{.EventName}}{srv, cq, cm})->proceed();
-		}
-		{{end}}
-	`
-
-	proto = `
-	service Broker {
-		{{range .}}
-		rpc {{.ActionType | trimSuffix "Event"}}{{.Spec.EventName}} (ConnectionIdentity) returns (Result);
-		{{end}}
+func generate(tpl string, outfile string, data interface{}) error {
+	f, err := os.Create(outfile)
+	if err != nil {
+		return err
 	}
-	`
+	defer f.Close()
 
-	cmakeTemplate = `
-	add_library(autogen
-	{{range .}}
-	{{.Spec.EventName}}.h
-	{{.Spec.EventName}}.cpp
-	{{end}}
-	)
-	target_include_directories(autogen PUBLIC ${CMAKE_BINARY_DIR} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-	`
-)
+	// tmpl, err := template.ParseFiles(tpl)
+	return template.Must(template.New(path.Base(tpl)).Funcs(sprig.TxtFuncMap()).ParseFiles(tpl)).Execute(f, data)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // tmpl = tmpl.Funcs(sprig.TxtFuncMap())
+
+	// return tmpl.Execute(f, data)
+}
+
+func generateAction(op string, act Action) error {
+	err := generate(fmt.Sprintf("codegen/templates/%sEvent.cpp.tpl", op), fmt.Sprintf("broker/autogen/%s.cpp", act.GetActionName()), act)
+	if err != nil {
+		return err
+	}
+
+	err = generate("codegen/templates/Event.h.tpl", fmt.Sprintf("broker/autogen/%s.h", act.GetActionName()), act)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 type Action interface {
+	GetActionName() string
 	GenerateCode() error
 }
 
@@ -117,6 +63,10 @@ type SendEventAction struct {
 	} `yaml:"spec"`
 }
 
+func (act *SendEventAction) GetActionName() string {
+	return act.Spec.EventName
+}
+
 func (act *SendEventAction) GenerateCode() error {
 
 	for i := range act.Spec.Params {
@@ -128,40 +78,7 @@ func (act *SendEventAction) GenerateCode() error {
 		}
 	}
 
-	// 默认写到 ./broker/autogen/CEventXXX.cpp
-	out, err := os.Create(fmt.Sprintf("broker/autogen/%s.cpp", act.Spec.EventName))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	tmpl, err := template.New("SendEventAction").Parse(sendEventCpp)
-	if err != nil {
-		return err
-	}
-
-	err = tmpl.Execute(out, act)
-	if err != nil {
-		return err
-	}
-
-	hpp, err := os.Create(fmt.Sprintf("broker/autogen/%s.h", act.Spec.EventName))
-	if err != nil {
-		return err
-	}
-	defer hpp.Close()
-
-	tmpl, err = template.New("SendEventActionHpp").Parse(eventHpp)
-	if err != nil {
-		return err
-	}
-
-	err = tmpl.Execute(hpp, act)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return generateAction("Send", act)
 }
 
 type RecvEventAction struct {
@@ -171,46 +88,26 @@ type RecvEventAction struct {
 	} `yaml:"spec"`
 }
 
+func (act *RecvEventAction) GetActionName() string {
+	return act.Spec.EventName
+}
+
 func (act *RecvEventAction) GenerateCode() error {
-	tmpl, err := template.New("RecvEventAction").Parse(recvEventCpp)
-	if err != nil {
-		return err
-	}
-
-	out, err := os.Create(fmt.Sprintf("broker/autogen/%s.cpp", act.Spec.EventName))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	err = tmpl.Execute(out, act)
-	if err != nil {
-		return err
-	}
-
-	hpp, err := os.Create(fmt.Sprintf("broker/autogen/%s.h", act.Spec.EventName))
-	if err != nil {
-		return err
-	}
-	defer hpp.Close()
-
-	tmpl, err = template.New("RecvEventActionHpp").Parse(eventHpp)
-	if err != nil {
-		return err
-	}
-
-	err = tmpl.Execute(hpp, act)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return generateAction("Recv", act)
 }
 
 func main() {
+	flag.Parse()
+
+	wd, err := os.Getwd()
+	if err != nil {
+		glog.Fatal(err)
+	}
+	glog.Infof("working dir is %s\n", wd)
+
 	f, err := os.Open("actions.yaml")
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 
 	d := yaml.NewDecoder(f)
@@ -247,24 +144,27 @@ func main() {
 		action.GenerateCode()
 	}
 
-	tmpl, err := template.New("proto").Funcs(sprig.TxtFuncMap()).Parse(proto)
+	err = generate("codegen/templates/x51.proto.tpl", "protos/x51.proto", actions)
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 
-	// tmpl.Funcs(sprig.FuncMap())
-	tmpl.Execute(os.Stdout, actions)
-
-	tmpl, err = template.New("autogen").Funcs(sprig.TxtFuncMap()).Parse(cmakeTemplate)
+	err = generate("codegen/templates/CMakeLists.txt.tpl", "broker/autogen/CMakeLists.txt", actions)
+	// tmpl, err = template.New("cmake").Funcs(sprig.TxtFuncMap()).Parse(cmakeTemplate)
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 
-	// tmpl.Funcs(sprig.FuncMap())
-	autogenCMake, err := os.Create("broker/autogen/CMakeLists.txt")
+	err = generate("codegen/templates/init_grpc_async_calls.h.tpl", "broker/autogen/init_grpc_async_calls.h", actions)
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
-	tmpl.Execute(autogenCMake, actions)
+
+	// // tmpl.Funcs(sprig.FuncMap())
+	// autogenCMake, err := os.Create("broker/autogen/CMakeLists.txt")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// tmpl.Execute(autogenCMake, actions)
 
 }

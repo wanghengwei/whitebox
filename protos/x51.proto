@@ -1,28 +1,11 @@
 syntax = "proto3";
 
-// package x51;
-
-message Result {
-    int32 errorCode = 1;
-    string errorMessage = 2;
-    string category = 3;
-}
-
-message ConnectionIdentity {
-    string account = 1;
-    string service = 2;
-    uint32 connectionIndex = 3;
-}
-
-// message SendEventParams {
-//     ConnectionIdentity conn = 1;
-//     string params = 2;
-// }
+import "common.proto";
 
 service Broker {
+    
     rpc SendCEventLogin (ConnectionIdentity) returns (Result);
+    
     rpc RecvCEventLoginRes (ConnectionIdentity) returns (Result);
+    
 }
-
-// service RecvBroker {
-// }
