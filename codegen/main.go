@@ -49,53 +49,6 @@ type Action interface {
 	GenerateCode() error
 }
 
-type SendEventAction struct {
-	ActionType string `yaml:"type"`
-	Spec       struct {
-		EventName string `yaml:"eventName"`
-		Params    []struct {
-			Field     string `yaml:"field"`
-			Constant  string `yaml:"constant"`
-			ValueFrom string `yaml:"valueFrom"`
-			ValueType string `yaml:"type"`
-			Value     string
-		} `yaml:"params"`
-	} `yaml:"spec"`
-}
-
-func (act *SendEventAction) GetActionName() string {
-	return act.Spec.EventName
-}
-
-func (act *SendEventAction) GenerateCode() error {
-
-	for i := range act.Spec.Params {
-		valueFrom := act.Spec.Params[i].ValueFrom
-		if len(valueFrom) > 0 {
-			// get value from player data
-			act.Spec.Params[i].Value = "1"
-			continue
-		}
-	}
-
-	return generateAction("Send", act)
-}
-
-type RecvEventAction struct {
-	ActionType string `yaml:"type"`
-	Spec       struct {
-		EventName string `yaml:"eventName"`
-	} `yaml:"spec"`
-}
-
-func (act *RecvEventAction) GetActionName() string {
-	return act.Spec.EventName
-}
-
-func (act *RecvEventAction) GenerateCode() error {
-	return generateAction("Recv", act)
-}
-
 func main() {
 	flag.Parse()
 

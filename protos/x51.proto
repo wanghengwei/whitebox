@@ -4,8 +4,8 @@ import "common.proto";
 
 service Broker {
     
-    rpc SendCEventLogin (ConnectionIdentity) returns (Result);
+    rpc SendCEventVideoInitConnectionRequest (ConnectionIdentity) returns (Result);
     
-    rpc RecvCEventLoginRes (ConnectionIdentity) returns (Result);
+    rpc RecvCEventVideoInitConnectionResponse (ConnectionIdentity) returns (Result);
     
 }

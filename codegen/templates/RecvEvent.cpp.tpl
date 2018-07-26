@@ -1,5 +1,9 @@
 {{with .Spec}}
 #include "{{.EventName}}.h"
+{{range .IncludeHeaders}}
+#include <{{.}}>
+{{end}}
+
 class Recv{{.EventName}} : public AsyncCallImpl<Recv{{.EventName}}> {
 public:
     using AsyncCallImpl<Recv{{.EventName}}>::AsyncCallImpl;
@@ -14,8 +18,8 @@ protected:
         int idx = m_request.connectionindex();
         auto conn = m_connMgr.findConnection(acc, srv, idx);
         
-        conn->waitEvent([](const CEvent&) {
-            return true;
+        conn->waitEvent([](CEvent* ev) {
+            return ev->GetCLSID() == {{.EventName}}::_GetCLSID();
         }, [this]() {
             m_responder.Finish(m_reply, grpc::Status::OK, this);
         });

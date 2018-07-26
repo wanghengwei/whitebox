@@ -1,5 +1,9 @@
 {{with .Spec}}
 #include "{{.EventName}}.h"
+{{range .IncludeHeaders}}
+#include <{{.}}>
+{{end}}
+
 class Send{{.EventName}} : public AsyncCallImpl<Send{{.EventName}}> {
 public:
     using AsyncCallImpl<Send{{.EventName}}>::AsyncCallImpl;

@@ -3,20 +3,22 @@
 #include <memory>
 #include <x51.grpc.pb.h>
 
-class CEvent {
-public:
-    virtual ~CEvent() {}
-};
+// class CEvent {
+// public:
+//     virtual ~CEvent() {}
+// };
 
-class CEventLogin : public CEvent {
-public:
-    int m_roomId;
-};
+// class CEventLogin : public CEvent {
+// public:
+//     int m_roomId;
+// };
+
+class CEvent;
 
 class Connection {
 public:
     void sendEvent(CEvent* ev) {}
-    void waitEvent(std::function<bool(const CEvent&)> cond, std::function<void()> cb) {
+    void waitEvent(std::function<bool(CEvent*)> cond, std::function<void()> cb) {
         if (cond) {
             cb();
         }

@@ -6,6 +6,10 @@
 
 #include <init_grpc_async_calls.h>
 
+#include "connector_manager.h"
+
+#include <fruit/fruit.h>
+
 int main() {
     std::string addr{"0.0.0.0:12345"};
 
@@ -24,6 +28,9 @@ int main() {
 
     initGRPCAsyncCalls(&broker, cq.get(), connMgr);
 
+    fruit::Injector<ConnectorManager> injector{getConnectorManager};
+    ConnectorManager* connectorManager = injector.get<ConnectorManager*>();
+
     void* tag;
     bool ok;
     while (true) {
@@ -33,6 +40,8 @@ int main() {
         }
         AsyncCall* ac = static_cast<AsyncCall*>(tag);
         ac->proceed();
+
+        connectorManager->poll();
     }
 
     return 0;
