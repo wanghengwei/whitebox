@@ -52,11 +52,11 @@ type Action interface {
 func main() {
 	flag.Parse()
 
-	wd, err := os.Getwd()
-	if err != nil {
-		glog.Fatal(err)
-	}
-	glog.Infof("working dir is %s\n", wd)
+	// wd, err := os.Getwd()
+	// if err != nil {
+	// 	glog.Fatal(err)
+	// }
+	// glog.Infof("working dir is %s\n", wd)
 
 	f, err := os.Open("actions.yaml")
 	if err != nil {
@@ -67,6 +67,7 @@ func main() {
 
 	actions := []Action{}
 
+	// 先走一遍，把每个文档块的类型找出来
 	for {
 		tmp := map[interface{}]interface{}{}
 		err := d.Decode(&tmp)
@@ -86,6 +87,7 @@ func main() {
 		}
 	}
 
+	// 重新，正式读一遍并解析出合适的对象
 	f.Seek(0, 0)
 	d = yaml.NewDecoder(f)
 

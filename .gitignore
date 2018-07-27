@@ -6,3 +6,5 @@ GPATH
 node_modules
 
 autogen/
+vendor/
+/codegen
