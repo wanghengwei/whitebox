@@ -32,6 +32,7 @@ add_executable(broker
     main.cpp
     connector_impl.cpp
     connector_manager.cpp
+    connect_async_call.cpp
 )
 target_link_libraries(broker autogen grpc++_unsecure protobuf fruit dl pthread)
 target_compile_options(broker PRIVATE -Wno-format)

@@ -4,7 +4,7 @@ const fs = require('fs');
 const xmlparser = require('fast-xml-parser');
 const grpc = require('grpc');
 
-var x51 = grpc.load(`${__dirname}/../protos/x51.proto`).x51;
+var x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
 var broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
 
 // get job definitions from network or local file or command line
@@ -22,6 +22,30 @@ function getJobDefs() {
 class Robot {
     constructor(acc) {
         this.account = acc;
+    }
+}
+
+// 发起连接，并等待连接失败或成功
+class ConnectAction {
+    constructor(addr, port, srv, idx) {
+        this.address = addr;
+        this.port = port;
+        this.service = srv;
+        this.connIdx = idx;
+    }
+
+    run(robot, stopNotifier) {
+        let f = (arg, cb) => broker.Connect(arg, cb);
+        return rxjs.bindCallback(f)({
+            address: this.address,
+            port: this.port,
+            password: robot.password,
+            connectionId: {
+                service: this.service,
+                account: robot.account,
+                connectionIndex: this.connIdx,
+            },
+        });
     }
 }
 
@@ -61,13 +85,20 @@ class RecvEventAction {
 
 class TestCase {
     constructor(def) {
+        // 解析每个动作
         this.actions = [];
         def.test_case.template.action.forEach(x => {
             let t = x["@_type"];
+            let srv = x['@_service'];
+            let connIdx = parseInt(x['@_conn']);
+
             if (t == "send") {
-                this.actions.push(new SendEventAction(x["@_name"], x['@_service'], x['@_conn']));
+                this.actions.push(new SendEventAction(x["@_name"], srv, connIdx));
             } else if (t == "recv") {
-                this.actions.push(new RecvEventAction(x["@_name"], x['@_service'], x['@_conn']));
+                this.actions.push(new RecvEventAction(x["@_name"], srv, connIdx));
+            } else if (t == "connect") {
+                console.log(`add connect action: service=${srv}`);
+                this.actions.push(new ConnectAction("", 0, srv, connIdx));
             }
         }, this);
     }

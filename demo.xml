@@ -6,8 +6,10 @@
     </services>
     <template>
         <action type="connect" service="User" conn="0"/>
-        <action type="send" name="CEventLogin" service="User" conn="0"/>
-        <action type="recv" name="CEventLoginRes" service="User" conn="0"/>
+        <action type="connect" service="User" conn="1"/>
+        <action type="sleep" seconds="1"/>
+        <!-- <action type="send" name="CEventLogin" service="User" conn="0"/>
+        <action type="recv" name="CEventLoginRes" service="User" conn="0"/> -->
         <action type="connect" service="Video" conn="0"/>
     </template>
 </test_case>

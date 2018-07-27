@@ -3,16 +3,6 @@
 #include <memory>
 #include <x51.grpc.pb.h>
 
-// class CEvent {
-// public:
-//     virtual ~CEvent() {}
-// };
-
-// class CEventLogin : public CEvent {
-// public:
-//     int m_roomId;
-// };
-
 class CEvent;
 
 class Connection {
@@ -36,16 +26,16 @@ private:
 
 class AsyncCall {
 public:
+    enum class State {
+        CREATE, PROCESS, FINISH,
+    };
+public:
     virtual ~AsyncCall() {}
     virtual void proceed() = 0;
 };
 
 template<typename SubClass>
 class AsyncCallImpl : public AsyncCall {
-private:
-    enum class State {
-        CREATE, PROCESS, FINISH,
-    };
 public:
     AsyncCallImpl(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm) : m_srv{srv}, m_cq{cq}, m_connMgr{cm}, m_responder{&m_ctx} {
         
@@ -62,10 +52,10 @@ public:
         } else if (m_state == State::PROCESS) {
             (new SubClass{m_srv, m_cq, m_connMgr})->proceed();
 
-            std::string acc = m_request.account();
-            std::string srv = m_request.service();
-            int idx = m_request.connectionindex();
-            auto conn = m_connMgr.findConnection(acc, srv, idx);
+            // std::string acc = m_request.account();
+            // std::string srv = m_request.service();
+            // int idx = m_request.connectionindex();
+            // auto conn = m_connMgr.findConnection(acc, srv, idx);
             m_state = State::FINISH;
 
             doReply();
