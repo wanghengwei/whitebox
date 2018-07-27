@@ -19,24 +19,18 @@ func generate(tpl string, outfile string, data interface{}) error {
 	}
 	defer f.Close()
 
-	// tmpl, err := template.ParseFiles(tpl)
-	return template.Must(template.New(path.Base(tpl)).Funcs(sprig.TxtFuncMap()).ParseFiles(tpl)).Execute(f, data)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// // tmpl = tmpl.Funcs(sprig.TxtFuncMap())
-
-	// return tmpl.Execute(f, data)
+	tplName := path.Base(tpl)
+	tplPath := path.Join("tools/codegen/templates", tpl)
+	return template.Must(template.New(tplName).Funcs(sprig.TxtFuncMap()).ParseFiles(tplPath)).Execute(f, data)
 }
 
 func generateAction(op string, act Action) error {
-	err := generate(fmt.Sprintf("codegen/templates/%sEvent.cpp.tpl", op), fmt.Sprintf("broker/autogen/%s.cpp", act.GetActionName()), act)
+	err := generate(fmt.Sprintf("%sEvent.cpp.tpl", op), fmt.Sprintf("broker/autogen/%s.cpp", act.GetActionName()), act)
 	if err != nil {
 		return err
 	}
 
-	err = generate("codegen/templates/Event.h.tpl", fmt.Sprintf("broker/autogen/%s.h", act.GetActionName()), act)
+	err = generate("Event.h.tpl", fmt.Sprintf("broker/autogen/%s.h", act.GetActionName()), act)
 	if err != nil {
 		return err
 	}
@@ -51,12 +45,6 @@ type Action interface {
 
 func main() {
 	flag.Parse()
-
-	// wd, err := os.Getwd()
-	// if err != nil {
-	// 	glog.Fatal(err)
-	// }
-	// glog.Infof("working dir is %s\n", wd)
 
 	f, err := os.Open("actions.yaml")
 	if err != nil {
@@ -99,27 +87,20 @@ func main() {
 		action.GenerateCode()
 	}
 
-	err = generate("codegen/templates/x51.proto.tpl", "protos/x51.proto", actions)
+	err = generate("x51.proto.tpl", "protos/x51.proto", actions)
 	if err != nil {
 		glog.Fatal(err)
 	}
 
-	err = generate("codegen/templates/CMakeLists.txt.tpl", "broker/autogen/CMakeLists.txt", actions)
+	err = generate("CMakeLists.txt.tpl", "broker/autogen/CMakeLists.txt", actions)
 	// tmpl, err = template.New("cmake").Funcs(sprig.TxtFuncMap()).Parse(cmakeTemplate)
 	if err != nil {
 		glog.Fatal(err)
 	}
 
-	err = generate("codegen/templates/init_grpc_async_calls.h.tpl", "broker/autogen/init_grpc_async_calls.h", actions)
+	err = generate("init_grpc_async_calls.h.tpl", "broker/autogen/init_grpc_async_calls.h", actions)
 	if err != nil {
 		glog.Fatal(err)
 	}
-
-	// // tmpl.Funcs(sprig.FuncMap())
-	// autogenCMake, err := os.Create("broker/autogen/CMakeLists.txt")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// tmpl.Execute(autogenCMake, actions)
 
 }
