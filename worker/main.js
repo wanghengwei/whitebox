@@ -1,8 +1,11 @@
+'use strict';
+
 const rxjs = require('rxjs');
 const opts = require('rxjs/operators');
 const fs = require('fs');
 const xmlparser = require('fast-xml-parser');
 const grpc = require('grpc');
+const logger = require('pino')({prettyPrint: true});
 
 var x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
 var broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
@@ -83,11 +86,33 @@ class RecvEventAction {
     }
 }
 
+class SleepAction {
+    constructor(sec) {
+        this.sleepDuration = sec * 1000;
+    }
+
+    run(robot, stopNotifier) {
+        return rxjs.timer(this.sleepDuration).pipe( 
+            opts.map(_ => {
+                // logger.info({x51: x51}, 'map');
+                return new x51.Result(true);
+            })
+        );
+    }
+}
+
 class TestCase {
     constructor(def) {
         // 解析每个动作
         this.actions = [];
-        def.test_case.template.action.forEach(x => {
+        let templates = [];
+        if (Array.isArray(def.test_case.template.action)) {
+            templates = def.test_case.template.action;
+        } else {
+            templates.push(def.test_case.template.action);
+        }
+
+        templates.forEach(x => {
             let t = x["@_type"];
             let srv = x['@_service'];
             let connIdx = parseInt(x['@_conn']);
@@ -97,8 +122,13 @@ class TestCase {
             } else if (t == "recv") {
                 this.actions.push(new RecvEventAction(x["@_name"], srv, connIdx));
             } else if (t == "connect") {
-                console.log(`add connect action: service=${srv}`);
+                // console.log(`add connect action: service=${srv}`);
                 this.actions.push(new ConnectAction("", 0, srv, connIdx));
+            } else if (t == "sleep") {
+                let sec = parseInt(x['@_seconds']);
+                logger.info({seconds: sec}, "add a sleep action");
+
+                this.actions.push(new SleepAction(sec));
             }
         }, this);
     }
@@ -162,10 +192,16 @@ var jobManager = new JobManager();
 
 function main() {
     getJobDefs().subscribe(jd => {
+        logger.info({job: jd}, `received a job`);
+
         let job =new Job(jd);
         jobManager.addJob(job);
         job.run().subscribe(state => {
-            console.log(state);
+            logger.info({result: state}, "job done");
+        }, err => {
+            logger.error({error: err}, "job error");
+        }, () => {
+            logger.info("all done");
         });
     });
 }

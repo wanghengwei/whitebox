@@ -10,9 +10,11 @@ message ConnectParams {
 }
 
 message Result {
-    int32 errorCode = 1;
-    string errorMessage = 2;
-    string category = 3;
+    bool ok = 1;
+    int32 errorCode = 2;
+    string errorCategory = 3;
+    string message = 4;
+    // string errorString = 3;
 }
 
 message ConnectionIdentity {
