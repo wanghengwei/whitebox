@@ -1,5 +1,5 @@
-import { Observable, timer, from, empty, of, concat } from 'rxjs';
-import { map, flatMap, tap, repeat, concatAll, ignoreElements, takeUntil, catchError, delay, filter } from 'rxjs/operators';
+import { Observable, timer, from, empty, of, concat, race } from 'rxjs';
+import { map, flatMap, tap, repeat, concatAll, ignoreElements, takeUntil, catchError, delay, filter, takeLast } from 'rxjs/operators';
 
 import { PostProcessor, ContinuePostProcessor } from './postprocessors';
 import { ContinueError } from './errors';
@@ -72,29 +72,14 @@ abstract class SimpleActivity implements Activity {
     }
 }
 
-// // 加入执行前等待的功能。子类实现doProceed方法。
-// abstract class DelayedAbstractActivity extends AbstractActivity {
-//     proceed(): Observable<Result> {
-//         return this.doProceed().pipe(delay(1000));
-//     }
-
-//     abstract doProceed(): Observable<Result>;
-// }
-
 class SleepActivity extends SimpleActivity {
-    sleepMilliseconds: number = 0;
-
     doParse(data: any): void {
         let sec = Number(data['@_seconds']) || 0;
         this.delayTime = sec * 1000;
     }
 
     doProceed(): Observable<Result> {
-        return of(true).pipe(
-            tap(undefined, undefined, () => {
-                logger.info(`sleep ${this.sleepMilliseconds}ms DONE`);
-            }),
-        );
+        return of(true);
     }
 }
 
@@ -121,6 +106,8 @@ export class CompositeActivity implements Activity {
                 act = new LoopActivity();
             } else if (t == 'echo') {
                 act = new EchoActivity();
+            } else if (t == 'select') {
+                act = new SelectActivity();
             }
 
             if (act == null) {
@@ -194,5 +181,29 @@ class EchoActivity extends SimpleActivity {
                 logger.info(t);
             }),
         );
+    }
+}
+
+// 表示一个多选一的分支图。使用场景：同时等待多个event从服务器返回，只取第一个返回的值。
+class SelectActivity extends SimpleActivity {
+    forks: Array<CompositeActivity> = [];
+
+    doParse(data: any) {
+        if (!data.fork || !Array.isArray(data.fork)) {
+            logger.warn("invalid synchronization activity");
+        }
+
+        data.fork.forEach((x: any) => {
+            let ca = new CompositeActivity();
+            ca.parse(x);
+            this.forks.push(ca);
+        });
+    }
+
+    doProceed(): Observable<Result> {
+        logger.info({forks: this.forks}, "select");
+
+        let rs = this.forks.map(act => act.proceed());
+        return race(rs).pipe(takeLast(1));
     }
 }
