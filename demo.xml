@@ -20,7 +20,7 @@
             <action type="echo" message="in loop 1"/>
             <action type="loop" count="2" tag="loop_2">
                 <action type="echo" message="continue in loop 2">
-                    <postprocessor type="continue" condition="ctx.cnt++ == 0" tag="loop_1"/>
+                    <postprocessor type="continue" condition="false" tag="loop_1"/>
                 </action>
                 <action type="echo" message="not print at first time"/>
             </action>
