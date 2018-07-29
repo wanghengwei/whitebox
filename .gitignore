@@ -8,3 +8,5 @@ node_modules
 autogen/
 vendor/
 /codegen
+
+/activity_diagram/*.js

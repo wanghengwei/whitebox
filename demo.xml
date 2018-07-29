@@ -3,9 +3,35 @@
     <template>
         <!-- <action type="connect" service="User" conn="0"/> -->
         <!-- <action type="connect" service="User" conn="1"/> -->
-        <action type="sleep" seconds="1"/>
+        <!-- <action type="sleep" seconds="1"/> -->
+        <!-- <action type="sleep" seconds="2"/> -->
         <!-- <action type="send" name="CEventLogin" service="User" conn="0"/> -->
         <!-- <action type="recv" name="CEventLoginRes" service="User" conn="0"/> -->
         <!-- <action type="connect" service="Video" conn="0"/> -->
+
+        <!-- 循环 -->
+        <!-- <action type="loop" count="3">
+            <action type="sleep" seconds="1"/>
+            <action type="echo" message="Hello!"/>
+        </action> -->
+
+        <!-- continue -->
+        <action type="loop" count="2" tag="loop_2">
+            <action type="sleep" seconds="1"/>
+            <action type="echo" message="continue">
+                <postprocessor type="continue" condition="ctx.cnt++ == 0" tag="loop_2"/>
+            </action>
+            <action type="echo" message="NOT PRINT!"/>
+        </action>
+
+        <!-- OR -->
+        <action type="synchronization">
+            <fork>
+                <action type="echo" message="fork 1"/>
+            </fork>
+            <fork>
+                <action type="echo" message="fork 2"/>
+            </fork>
+        </action>
     </template>
 </test_case>
