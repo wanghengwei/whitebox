@@ -2,9 +2,11 @@ import pino from 'pino';
 import { parse } from 'fast-xml-parser';
 import 'fs';
 import { readFile } from 'fs';
-import { Observable, timer, from, empty, of } from 'rxjs';
-import { map, flatMap, tap, repeat, concatAll, ignoreElements, takeUntil, catchError } from 'rxjs/operators';
-import ts from 'typescript';
+import { Observable, timer, from, empty, of, concat } from 'rxjs';
+import { map, flatMap, tap, repeat, concatAll, ignoreElements, takeUntil, catchError, delay } from 'rxjs/operators';
+
+import {PostProcessor, ContinuePostProcessor} from './postprocessors';
+import { ContinueError } from './errors';
 
 const logger = pino({ prettyPrint: true });
 
@@ -29,36 +31,6 @@ interface Result {
 
 }
 
-class ContinueError implements Error {
-    name: string = "ContinueError";
-    message: string = "";
-}
-
-// 后置处理器，比如判断结果然后终止act队列
-interface PostProcessor {
-    invoke(ctx?: any): any;
-}
-
-class ContinuePostProcessor implements PostProcessor {
-    condition: string = "";
-
-    parse(data: any): void {
-        let cond = data['@_condition'] || "(true)";
-        cond = `({
-            run: (ctx: any) => {
-                return (${cond});
-            }
-        })`;
-        this.condition = ts.transpile(cond);
-    }
-
-    invoke(ctx?: any): any {
-        let t = eval(this.condition);
-        if (t.run(ctx)) {
-            throw new ContinueError();
-        }
-    }
-}
 
 class SimpleResult implements Result {
 
@@ -121,7 +93,7 @@ class CompositeActivity implements Activity {
             this.activities.push(act);
         });
 
-        logger.info({ actions: this.activities }, "parse done")
+        // logger.info({ actions: this.activities }, "parse done")
     }
 
     proceed(): Observable<Result> {
@@ -145,9 +117,11 @@ class CompositeActivity implements Activity {
 
 class LoopActivity extends CompositeActivity {
     loopCount: number = -1;
+    tag: string = "";
 
     parse(data: any): void {
         this.loopCount = Number(data['@_count']) || -1;
+        this.tag = data['@_tag'];
         super.parse(data);
     }
 
@@ -158,7 +132,7 @@ class LoopActivity extends CompositeActivity {
             concatAll(),
             // 如果error是Continue，那么不应当简单当作error，而是重头执行
             catchError((err, caught) => {
-                if (err instanceof ContinueError) {
+                if (err instanceof ContinueError && err.tag == this.tag) {
                     return caught;
                 }
 
@@ -196,10 +170,12 @@ class EchoActivity implements Activity {
 
     proceed(): Observable<Result> {
         return of(this).pipe(
+            delay(1000),
             tap(t => {
                 logger.info(t.message);
             }),
             map(t => {
+                // 处理postprocessor
                 if (!t.postprocessor) {
                     return t;
                 }
