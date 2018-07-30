@@ -3,12 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const grpc_1 = __importDefault(require("grpc"));
 const rxjs_1 = require("rxjs");
 const operators_1 = require("rxjs/operators");
-const postprocessors_1 = require("./postprocessors");
 const errors_1 = require("./errors");
 const logger_1 = __importDefault(require("./logger"));
-const grpc_1 = __importDefault(require("grpc"));
+const postprocessors_1 = require("./postprocessors");
 const x51 = grpc_1.default.load(`${__dirname}/../protos/x51.proto`);
 const broker = new x51.Broker('localhost:12345', grpc_1.default.credentials.createInsecure());
 // 动作的返回值。
@@ -97,6 +97,9 @@ class CompositeActivity {
             }
             else if (t == 'connect') {
                 act = new ConnectActionActivity();
+            }
+            else if (t == 'send') {
+                act = new SendActionActivity();
             }
             if (act == null) {
                 return;
@@ -221,5 +224,26 @@ class ConnectActionActivity extends SimpleActivity {
             port: robot.getProp(this.portKey),
             password: "",
         }).pipe(operators_1.map((x) => new Result(x.error)));
+    }
+}
+class SendActionActivity extends SimpleActivity {
+    constructor() {
+        super(...arguments);
+        this.event = "";
+        this.service = "";
+        this.connectionIndex = 0;
+    }
+    doProceed(ctx) {
+        let f = (arg, cb) => broker[`Send${this.event}`](arg, cb);
+        return rxjs_1.bindNodeCallback(f)({
+            account: ctx.robot.account,
+            service: this.service,
+            connectionIndex: this.connectionIndex,
+        }).pipe(operators_1.map((x) => new Result(x.error)));
+    }
+    doParse(data) {
+        this.event = data['@_name'];
+        this.service = data['@_service'];
+        this.connectionIndex = Number(data['@_conn']) || 0;
     }
 }

@@ -1,10 +1,10 @@
-import { Observable, timer, from, empty, of, concat, race, bindCallback, bindNodeCallback } from "rxjs";
-import { map, flatMap, tap, repeat, concatAll, ignoreElements, takeUntil, catchError, delay, filter, takeLast } from "rxjs/operators";
-import { PostProcessor, ContinuePostProcessor } from "./postprocessors";
+import grpc from 'grpc';
+import { bindNodeCallback, from, Observable, of, race } from "rxjs";
+import { catchError, concatAll, delay, filter, map, repeat, takeLast, tap } from "rxjs/operators";
 import { ContinueError } from "./errors";
 import logger from "./logger";
-import grpc from 'grpc';
-import {Robot} from './robot';
+import { ContinuePostProcessor, PostProcessor } from "./postprocessors";
+import { Robot } from './robot';
 
 const x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
 const broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
@@ -112,6 +112,10 @@ export class CompositeActivity implements Activity {
         act = new SelectActivity();
       } else if (t == 'connect') {
         act = new ConnectActionActivity();
+      } else if (t == 'send') {
+        act = new SendActionActivity();
+      } else if (t == 'recv') {
+        act = new RecvActionActivity();
       }
 
       if (act == null) {
@@ -238,7 +242,7 @@ class ConnectActionActivity extends SimpleActivity {
 
   doProceed(ctx: any): Observable<any> {
     let robot: Robot = ctx.robot;
-    
+
     let f = (args: any, cb: any) => broker.Connect(args, cb);
 
     return bindNodeCallback(f)({
@@ -253,5 +257,51 @@ class ConnectActionActivity extends SimpleActivity {
     }).pipe(
       map((x: any) => new Result(x.error)),
     );
+  }
+}
+
+class SendActionActivity extends SimpleActivity {
+  event: string = "";
+  service: string = "";
+  connectionIndex: number = 0;
+
+  doProceed(ctx: any): Observable<any> {
+    let f = (arg, cb) => broker[`Send${this.event}`](arg, cb);
+    return bindNodeCallback(f)({
+      account: ctx.robot.account,
+      service: this.service,
+      connectionIndex: this.connectionIndex,
+    }).pipe(
+      map((x: any) => new Result(x.error)),
+    );
+  }
+
+  doParse(data: any): void {
+    this.event = data['@_name'];
+    this.service = data['@_service'];
+    this.connectionIndex = Number(data['@_conn']) || 0;
+  }
+}
+
+class RecvActionActivity extends SimpleActivity {
+  event: string = "";
+  service: string = "";
+  connectionIndex: number = 0;
+
+  doProceed(ctx: any): Observable<any> {
+    let f = (arg, cb) => broker[`Recv${this.event}`](arg, cb);
+    return bindNodeCallback(f)({
+      account: ctx.robot.account,
+      service: this.service,
+      connectionIndex: this.connectionIndex,
+    }).pipe(
+      map((x: any) => new Result(x.error)),
+    );
+  }
+
+  doParse(data: any): void {
+    this.event = data['@_name'];
+    this.service = data['@_service'];
+    this.connectionIndex = Number(data['@_conn']) || 0;
   }
 }
