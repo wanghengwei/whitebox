@@ -1,20 +1,29 @@
-import * as grpc from 'grpc';
-import pino from 'pino';
-import { of, Observable, Subject, bindCallback, bindNodeCallback } from 'rxjs';
-import { flatMap, map } from 'rxjs/operators';
-import { readFile } from 'fs';
-import { parse } from 'fast-xml-parser';
-import { CompositeActivity } from './activities';
-import {Robot} from './robot';
-
-const logger = pino({ prettyPrint: true });
-
+"use strict";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const grpc = __importStar(require("grpc"));
+const pino_1 = __importDefault(require("pino"));
+const rxjs_1 = require("rxjs");
+const operators_1 = require("rxjs/operators");
+const fs_1 = require("fs");
+const fast_xml_parser_1 = require("fast-xml-parser");
+const activities_1 = require("./activities");
+const robot_1 = require("./robot");
+const logger = pino_1.default({ prettyPrint: true });
 var x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
 var broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
-
 // get job definitions from network or local file or command line
 function getJobDefs() {
-    return of({
+    return rxjs_1.of({
         account: "1000",
         testCase: "demo",
         params: {
@@ -23,7 +32,6 @@ function getJobDefs() {
         }
     });
 }
-
 // // 发起连接，并等待连接失败或成功
 // class ConnectAction {
 //     constructor(addr, port, srv, idx) {
@@ -32,7 +40,6 @@ function getJobDefs() {
 //         this.service = srv;
 //         this.connIdx = idx;
 //     }
-
 //     run(robot, stopNotifier) {
 //         let f = (arg, cb) => broker.Connect(arg, cb);
 //         return rxjs.bindCallback(f)({
@@ -47,14 +54,12 @@ function getJobDefs() {
 //         });
 //     }
 // }
-
 // class SendEventAction {
 //     constructor(eventName, srv, connIdx) {
 //         this.eventName = eventName;
 //         this.serviceName = srv;
 //         this.connectionIndex = connIdx;
 //     }
-
 //     run(robot, stopNotifier) {
 //         let f = (arg, cb) => broker[`Send${this.eventName}`](arg, cb);
 //         return rxjs.bindCallback(f)({
@@ -64,14 +69,12 @@ function getJobDefs() {
 //         });
 //     }
 // }
-
 // class RecvEventAction {
 //     constructor(eventName, srv, connIdx) {
 //         this.eventName = eventName;
 //         this.serviceName = srv;
 //         this.connectionIndex = connIdx;
 //     }
-
 //     run(robot, stopNotifier) {
 //         let f = (arg, cb) => broker[`Recv${this.eventName}`](arg, cb);
 //         return rxjs.bindCallback(f)({
@@ -81,12 +84,10 @@ function getJobDefs() {
 //         })
 //     }
 // }
-
 // class SleepAction {
 //     constructor(sec) {
 //         this.sleepDuration = sec * 1000;
 //     }
-
 //     run(robot, stopNotifier) {
 //         return rxjs.timer(this.sleepDuration).pipe(
 //             opts.map(_ => {
@@ -96,12 +97,9 @@ function getJobDefs() {
 //         );
 //     }
 // }
-
 class TestCase {
-    act: CompositeActivity;
-
-    constructor(def: any) {
-        this.act = new CompositeActivity();
+    constructor(def) {
+        this.act = new activities_1.CompositeActivity();
         this.act.parse(def.test_case.template);
         // // 解析每个动作
         // this.actions = [];
@@ -111,12 +109,10 @@ class TestCase {
         // } else {
         //     templates.push(def.test_case.template.action);
         // }
-
         // templates.forEach(x => {
         //     let t = x["@_type"];
         //     let srv = x['@_service'];
         //     let connIdx = parseInt(x['@_conn']);
-
         //     if (t == "send") {
         //         this.actions.push(new SendEventAction(x["@_name"], srv, connIdx));
         //     } else if (t == "recv") {
@@ -127,14 +123,12 @@ class TestCase {
         //     } else if (t == "sleep") {
         //         let sec = parseInt(x['@_seconds']);
         //         logger.info({ seconds: sec }, "add a sleep action");
-
         //         this.actions.push(new SleepAction(sec));
         //     }
         // }, this);
     }
-
-    run(robot: Robot, stopNotifier: Observable<any>): Observable<any> {
-        return this.act.proceed({robot});
+    run(robot, stopNotifier) {
+        return this.act.proceed({ robot });
         // return rxjs.from(this.actions).pipe(
         //     opts.takeUntil(stopNotifier),
         //     opts.flatMap(act => {
@@ -143,57 +137,41 @@ class TestCase {
         // );
     }
 }
-
 class TestCaseManager {
-
-    findTestCase(id: string): Observable<TestCase> {
-        let f = bindNodeCallback(readFile);
-        return f(`${__dirname}/../${id}.xml`).pipe(
-            map(data => {
-                let x = parse(data.toString(), { ignoreAttributes: false });
-                return new TestCase(x);
-            }),
-        );
+    findTestCase(id) {
+        let f = rxjs_1.bindNodeCallback(fs_1.readFile);
+        return f(`${__dirname}/../${id}.xml`).pipe(operators_1.map(data => {
+            let x = fast_xml_parser_1.parse(data.toString(), { ignoreAttributes: false });
+            return new TestCase(x);
+        }));
     }
 }
 var testCaseManager = new TestCaseManager();
-
 class Job {
-    robot: Robot;
-    testCase: Observable<TestCase>;
-    stopNotifier: Subject<boolean>;
-
-    constructor(def: any) {
-        this.robot = new Robot(def.account);
+    constructor(def) {
+        this.robot = new robot_1.Robot(def.account);
         this.testCase = testCaseManager.findTestCase(def.testCase);
-        this.stopNotifier = new Subject();
+        this.stopNotifier = new rxjs_1.Subject();
     }
-
     stop() {
         this.stopNotifier.complete();
     }
-
     run() {
-        return this.testCase.pipe(
-            flatMap(tc => tc.run(this.robot, this.stopNotifier)),
-        );
+        return this.testCase.pipe(operators_1.flatMap(tc => tc.run(this.robot, this.stopNotifier)));
     }
 }
-
 class JobManager {
-    jobs: Array<Job> = [];
-
-    addJob(job: Job) {
+    constructor() {
+        this.jobs = [];
+    }
+    addJob(job) {
         this.jobs.push(job);
     }
 }
-
 var jobManager = new JobManager();
-
 function main() {
     getJobDefs().subscribe(jd => {
         logger.info({ job: jd }, `received a job`);
-
         let job = new Job(jd);
         jobManager.addJob(job);
         job.run().subscribe(state => {
@@ -205,5 +183,4 @@ function main() {
         });
     });
 }
-
 main();

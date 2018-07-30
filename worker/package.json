@@ -10,10 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "@types/pino": "^4.16.0",
-    "fast-xml-parser": "^3.11.1",
+    "fast-xml-parser": "^3.11.2",
     "grpc": "^1.13.0",
     "pino": "^4.17.5",
     "rxjs": "^6.2.2",
-    "xml2js": "^0.4.19"
+    "typescript": "^2.9.2"
   }
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <test_case>
     <template>
-        <!-- <action type="connect" service="User" conn="0"/> -->
+        <action type="connect" service="User" conn="0"/>
         <!-- <action type="connect" service="User" conn="1"/> -->
         <!-- <action type="sleep" seconds="1"/> -->
         <!-- <action type="sleep" seconds="2"/> -->
@@ -28,7 +28,7 @@
         </action> -->
 
         <!-- OR -->
-        <action type="select">
+        <!-- <action type="select">
             <fork>
                 <action type="sleep" seconds="4"/>
                 <action type="echo" message="fork 1"/>
@@ -36,6 +36,6 @@
             <fork>
                 <action type="echo" message="fork 2"/>
             </fork>
-        </action>
+        </action> -->
     </template>
 </test_case>
