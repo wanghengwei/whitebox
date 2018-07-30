@@ -18,8 +18,8 @@ function getJobDefs() {
         account: "1000",
         testCase: "demo",
         params: {
-            "User.0.Address": "1.2.3.4",
-            "User.0.Port": "33301",
+            "User.0.Address": "172.17.100.23",
+            "User.0.Port": 33301,
         }
     });
 }
@@ -165,6 +165,7 @@ class Job {
 
     constructor(def: any) {
         this.robot = new Robot(def.account);
+        this.robot.setProperties(def.params);
         this.testCase = testCaseManager.findTestCase(def.testCase);
         this.stopNotifier = new Subject();
     }

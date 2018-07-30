@@ -43,18 +43,22 @@ int main() {
     auto deadline = now + 100ms;
 
     while (true) {
-
-        auto nst = cq->AsyncNext(&tag, &ok, deadline);
-        
         deadline += 100ms;
 
-        if (nst == grpc::CompletionQueue::SHUTDOWN) {
-            break;
-        } else if (nst == grpc::CompletionQueue::GOT_EVENT) {
-            AsyncCall* ac = static_cast<AsyncCall*>(tag);
-            ac->proceed();
-        } else if (nst == grpc::CompletionQueue::TIMEOUT) {
-            
+        while (true) {
+            // 在deadline前一直取，直到时间到为止。
+            auto nst = cq->AsyncNext(&tag, &ok, deadline);
+
+            if (nst == grpc::CompletionQueue::SHUTDOWN) {
+                // 不应该的情况
+                return 1;
+            } else if (nst == grpc::CompletionQueue::GOT_EVENT) {
+                AsyncCall* ac = static_cast<AsyncCall*>(tag);
+                ac->proceed();
+            } else if (nst == grpc::CompletionQueue::TIMEOUT) {
+                // 超时，不再从队列里取数据了。
+                break;
+            }
         }
 
         connectorManager->poll();

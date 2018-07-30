@@ -3,6 +3,7 @@
 
 class ConnectorManager;
 
+// 用于连接服务器的异步操作
 class ConnectAsyncCall final : public AsyncCall {
 public:
     ConnectAsyncCall(

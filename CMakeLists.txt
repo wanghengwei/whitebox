@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.11)
 project(whitebox)
 
 include(ExternalProject)
-
+include(FetchContent)
 
 # 第三方库都在这里安装
 ## fruit
@@ -18,6 +18,20 @@ ExternalProject_Get_Property(ep_fruit INSTALL_DIR)
 include_directories(${INSTALL_DIR}/include)
 link_directories(${INSTALL_DIR}/lib)
 
+## fmt
+FetchContent_Declare(fmt
+    URL http://dl.tac.com/libs/fmt/fmt-5.1.0.zip
+    # SOURCE_DIR ${CMAKE_SOURCE_DIR}/_deps/fmt
+)
+FetchContent_GetProperties(fmt)
+if(NOT fmt_POPULATED)
+    FetchContent_Populate(fmt)
+    add_subdirectory(${fmt_SOURCE_DIR})
+endif()
+
+## Boost
+find_package(Boost REQUIRED COMPONENTS log)
+include_directories(${Boost_INCLUDE_DIRS})
 
 # 梦工厂的代码
 add_subdirectory(mgc)

@@ -27,8 +27,8 @@ function getJobDefs() {
         account: "1000",
         testCase: "demo",
         params: {
-            "User.0.Address": "1.2.3.4",
-            "User.0.Port": "33301",
+            "User.0.Address": "172.17.100.23",
+            "User.0.Port": 33301,
         }
     });
 }
@@ -150,6 +150,7 @@ var testCaseManager = new TestCaseManager();
 class Job {
     constructor(def) {
         this.robot = new robot_1.Robot(def.account);
+        this.robot.setProperties(def.params);
         this.testCase = testCaseManager.findTestCase(def.testCase);
         this.stopNotifier = new rxjs_1.Subject();
     }
