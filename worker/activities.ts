@@ -304,7 +304,13 @@ class ConnectActionActivity extends SimpleActivity {
   doProceed(ctx: any): Observable<any> {
     let robot: Robot = ctx.robot;
 
-    let f = (args: any, cb: any) => broker.Connect(args, cb);
+    let f = (args: any, cb: any) => {
+      logger.info({args}, "Connect");
+      broker.Connect(args, (result: any, error: any) => {
+        logger.info({result, error}, "Connect DONE");
+        cb(result, error);
+      });
+    };
 
     let args = {
       connectionId: {
