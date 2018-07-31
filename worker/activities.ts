@@ -306,7 +306,7 @@ class ConnectActionActivity extends SimpleActivity {
 
     let f = (args: any, cb: any) => {
       logger.info({args}, "Connect");
-      broker.Connect(args, (result: any, error: any) => {
+      broker.Connect(args, (error: any, result: any) => {
         logger.info({result, error}, "Connect DONE");
         cb(result, error);
       });
