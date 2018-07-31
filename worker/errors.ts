@@ -14,6 +14,11 @@ export class ContinueError implements Error {
 export class RestartError implements Error {
     name: string = "RestartError";
     message: string = "";
+    lastResult: any;
+
+    constructor(r: any) {
+        this.lastResult = r;
+    }
 }
 
 // 表示要重试当前动作

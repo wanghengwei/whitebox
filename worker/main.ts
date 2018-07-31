@@ -9,27 +9,6 @@ import testCaseManager from './testcase_manager';
 
 const logger = pino({ prettyPrint: true });
 
-// var x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
-// var broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
-
-
-// class RecvEventAction {
-//     constructor(eventName, srv, connIdx) {
-//         this.eventName = eventName;
-//         this.serviceName = srv;
-//         this.connectionIndex = connIdx;
-//     }
-
-//     run(robot, stopNotifier) {
-//         let f = (arg, cb) => broker[`Recv${this.eventName}`](arg, cb);
-//         return rxjs.bindCallback(f)({
-//             account: robot.account,
-//             service: this.serviceName,
-//             connectionIndex: parseInt(this.connectionIndex),
-//         })
-//     }
-// }
-
 class Job {
     robot: Robot;
     testCase: Observable<TestCase>;

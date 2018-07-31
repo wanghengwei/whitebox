@@ -70,7 +70,8 @@ abstract class SimpleActivity implements Activity {
         if (this.onErrorHandler == 'restart') {
           // 如果 on_error="restart" ，那么应当重新执行整个用例。
           // 做法就是抛出个错误，让最顶层去catchError
-          throw new RestartError();
+          // 不过这里有个问题，丢失了一次运行结果
+          throw new RestartError(r);
         } else if (this.onErrorHandler == 'retry') {
           // 重试当前动作
           throw new RetryError(r);
@@ -83,7 +84,7 @@ abstract class SimpleActivity implements Activity {
         if (err instanceof RetryError) {
           // 重新执行当前动作
           // 不过要把之前的结果也附带上，因为统计时要计算
-          return concat(timer(2000).pipe(ignoreElements()), of(err.lastResult), this.proceed(ctx));
+          return concat(of(err.lastResult), timer(2000).pipe(ignoreElements()), this.proceed(ctx));
         }
         
         throw err;
@@ -196,7 +197,7 @@ export class CompositeActivity implements Activity {
         if (err instanceof RestartError && this.isRoot) {
           logger.info("restart...");
           // 延迟一段时间再restart。最好是可配
-          return concat(timer(5000).pipe(ignoreElements()), caught);
+          return concat(of(err.lastResult), timer(5000).pipe(ignoreElements()), caught);
         }
 
         // 如果错误是continue，并且声明了要continue的是当前复合节点，那么就重新执行队列

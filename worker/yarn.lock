@@ -46,10 +46,6 @@ are-we-there-yet@~1.1.2:
     delegates "^1.0.0"
     readable-stream "^2.0.6"
 
-arrify@^1.0.0:
-  version "1.0.1"
-  resolved "http://registry.npm.taobao.org/arrify/download/arrify-1.0.1.tgz#898508da2226f380df904728456849c1501a4b0d"
-
 ascli@~1:
   version "1.0.1"
   resolved "http://registry.npm.taobao.org/ascli/download/ascli-1.0.1.tgz#bcfa5974a62f18e81cabaeb49732ab4a88f906bc"
@@ -67,10 +63,6 @@ brace-expansion@^1.1.7:
   dependencies:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
-
-buffer-from@^1.0.0, buffer-from@^1.1.0:
-  version "1.1.0"
-  resolved "http://registry.npm.taobao.org/buffer-from/download/buffer-from-1.1.0.tgz#87fcaa3a298358e0ade6e442cfce840740d1ad04"
 
 bytebuffer@~5:
   version "5.0.1"
@@ -153,10 +145,6 @@ delegates@^1.0.0:
 detect-libc@^1.0.2:
   version "1.0.3"
   resolved "http://registry.npm.taobao.org/detect-libc/download/detect-libc-1.0.3.tgz#fa137c4bd698edf55cd5cd02ac559f91a4c4ba9b"
-
-diff@^3.1.0:
-  version "3.5.0"
-  resolved "http://registry.npm.taobao.org/diff/download/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
 
 end-of-stream@^1.1.0:
   version "1.4.1"
@@ -295,10 +283,6 @@ lodash@^4.17.5:
 long@~3:
   version "3.2.0"
   resolved "http://registry.npm.taobao.org/long/download/long-3.2.0.tgz#d821b7138ca1cb581c172990ef14db200b5c474b"
-
-make-error@^1.1.1:
-  version "1.3.4"
-  resolved "http://registry.npm.taobao.org/make-error/download/make-error-1.3.4.tgz#19978ed575f9e9545d2ff8c13e33b5d18a67d535"
 
 minimatch@^3.0.4:
   version "3.0.4"
@@ -549,17 +533,6 @@ signal-exit@^3.0.0:
   version "3.0.2"
   resolved "http://registry.npm.taobao.org/signal-exit/download/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
 
-source-map-support@^0.5.6:
-  version "0.5.6"
-  resolved "http://registry.npm.taobao.org/source-map-support/download/source-map-support-0.5.6.tgz#4435cee46b1aab62b8e8610ce60f788091c51c13"
-  dependencies:
-    buffer-from "^1.0.0"
-    source-map "^0.6.0"
-
-source-map@^0.6.0:
-  version "0.6.1"
-  resolved "http://registry.npm.taobao.org/source-map/download/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
-
 split2@^2.2.0:
   version "2.2.0"
   resolved "http://registry.npm.taobao.org/split2/download/split2-2.2.0.tgz#186b2575bcf83e85b7d18465756238ee4ee42493"
@@ -628,19 +601,6 @@ through2@^2.0.2:
     readable-stream "^2.1.5"
     xtend "~4.0.1"
 
-ts-node@^7.0.0:
-  version "7.0.0"
-  resolved "http://registry.npm.taobao.org/ts-node/download/ts-node-7.0.0.tgz#a94a13c75e5e1aa6b82814b84c68deb339ba7bff"
-  dependencies:
-    arrify "^1.0.0"
-    buffer-from "^1.1.0"
-    diff "^3.1.0"
-    make-error "^1.1.1"
-    minimist "^1.2.0"
-    mkdirp "^0.5.1"
-    source-map-support "^0.5.6"
-    yn "^2.0.0"
-
 tslib@^1.9.0:
   version "1.9.3"
   resolved "http://registry.npm.taobao.org/tslib/download/tslib-1.9.3.tgz#d7e4dd79245d85428c4d7e4822a79917954ca286"
@@ -697,7 +657,3 @@ yargs@^3.10.0:
     string-width "^1.0.1"
     window-size "^0.1.4"
     y18n "^3.2.0"
-
-yn@^2.0.0:
-  version "2.0.0"
-  resolved "http://registry.npm.taobao.org/yn/download/yn-2.0.0.tgz#e5adabc8acf408f6385fc76495684c88e6af689a"
