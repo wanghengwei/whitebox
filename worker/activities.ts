@@ -1,7 +1,7 @@
 import grpc from 'grpc';
 import { bindNodeCallback, from, Observable, of, race, concat, timer } from "rxjs";
 import { catchError, concatAll, delay, filter, map, repeat, takeLast, tap, ignoreElements } from "rxjs/operators";
-import { ContinueError, RestartError } from "./errors";
+import { ContinueError, RestartError, RetryError } from "./errors";
 import logger from "./logger";
 import { ContinuePostProcessor, PostProcessor } from "./postprocessors";
 import { Robot } from './robot';
@@ -46,6 +46,7 @@ abstract class SimpleActivity implements Activity {
 
   parse(data: any): void {
     this.parsePostprocessor(data.postprocessor);
+    this.onErrorHandler = data['@_on_error'] || this.onErrorHandler;
     this.doParse(data);
   }
 
@@ -54,14 +55,31 @@ abstract class SimpleActivity implements Activity {
       // 执行on_error的handler
       map(r => {
         logger.info(`on_error is ${this.onErrorHandler}`);
-        if (this.onErrorHandler == 'restart') {
-          // 如果 on_error="restart" ，那么应当重新执行整个用例。
-          throw new RestartError();
-        } else if (this.onErrorHandler == 'retry') {
-          
-        } else {
+        if (r == undefined || !r.error) {
+          // 没有错误
           return r;
         }
+
+        if (this.onErrorHandler == 'restart') {
+          // 如果 on_error="restart" ，那么应当重新执行整个用例。
+          // 做法就是抛出个错误，让最顶层去catchError
+          throw new RestartError();
+        } else if (this.onErrorHandler == 'retry') {
+          // 重试当前动作
+          throw new RetryError(r);
+        } else {
+          // 其他情况就当作ignore
+          return r;
+        }
+      }),
+      catchError((err, caught) => {
+        if (err instanceof RetryError) {
+          // 重新执行当前动作
+          // 不过要把之前的结果也附带上，因为统计时要计算
+          return concat(timer(2000).pipe(ignoreElements()), of(err.lastResult), this.proceed(ctx));
+        }
+        
+        throw err;
       }),
       // 执行后置处理器
       // 要求所有act都要返回点东西，不能是empty
@@ -292,7 +310,7 @@ class ConnectActionActivity extends SimpleActivity {
     }).pipe(
       // 返回的是broker返回的result。如果grpc的错误，不会走这里，直接作为队列错误了。
       map((x: any) => {
-        logger.info(`grpc return ${x}`);
+        logger.info({result: x}, `Connect DONE`);
         return new Result(x.error);
       }),
     );

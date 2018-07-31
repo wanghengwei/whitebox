@@ -15,3 +15,14 @@ export class RestartError implements Error {
     name: string = "RestartError";
     message: string = "";
 }
+
+// 表示要重试当前动作
+export class RetryError implements Error {
+    name: string = "RetryError";
+    message: string = "";
+    lastResult: any;
+
+    constructor(r: any) {
+        this.lastResult = r;
+    }
+}

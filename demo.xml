@@ -2,7 +2,7 @@
 <test_case>
     <template>
         <action type="echo" message="Start..."/>
-        <action type="connect" service="User" conn="0"/>
+        <action type="connect" service="User" conn="0" on_error="retry"/>
         <!-- <action type="connect" service="User" conn="1"/> -->
         <!-- <action type="sleep" seconds="1"/> -->
         <!-- <action type="sleep" seconds="2"/> -->
