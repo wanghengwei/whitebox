@@ -30,11 +30,15 @@ add_subdirectory(autogen)
 # main module
 add_executable(broker 
     main.cpp
+    app.cpp
     errors.cpp
     connector_impl.cpp
     connector_manager.cpp
+    robot_manager.cpp
     connect_async_call.cpp
+    connection_impl.cpp
+    robot.cpp
 )
-target_link_libraries(broker autogen grpc++_unsecure protobuf fruit dl pthread ${Boost_LIBRARIES} fmt)
+target_link_libraries(broker autogen mgc grpc++_unsecure protobuf fruit dl pthread ${Boost_LIBRARIES} fmt)
 target_compile_options(broker PRIVATE -Wno-format)
 target_compile_definitions(broker PRIVATE BOOST_ALL_DYN_LINK)

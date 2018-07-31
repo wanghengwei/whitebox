@@ -70,7 +70,7 @@ function main() {
         let job = new Job(jd);
         jobManager.addJob(job);
         job.run().subscribe(state => {
-            logger.info({ result: state }, "job done");
+            logger.info({ result: state }, "action done");
         }, err => {
             logger.error({ error: err }, "job error");
         }, () => {

@@ -9,9 +9,8 @@ public:
     ConnectAsyncCall(
         Broker::AsyncService* srv, 
         grpc::ServerCompletionQueue* cq, 
-        ConnectionManager& cm,
         ConnectorManager& connectorManager
-    ) : m_srv{srv}, m_cq{cq}, m_connMgr{cm}, m_responder{&m_ctx}, m_connectorManager{connectorManager} {}
+    ) : m_srv{srv}, m_cq{cq}, m_responder{&m_ctx}, m_connectorManager{connectorManager} {}
 
     ConnectAsyncCall(ConnectAsyncCall&) = delete;
     ConnectAsyncCall& operator=(ConnectAsyncCall&) = delete;
@@ -30,7 +29,6 @@ protected:
     Result m_reply;
     grpc::ServerAsyncResponseWriter<Result> m_responder;
     State m_state{State::CREATE};
-    ConnectionManager& m_connMgr;
 
     ConnectorManager& m_connectorManager;
 };

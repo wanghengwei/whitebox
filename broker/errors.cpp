@@ -13,6 +13,10 @@ public:
             return "OK";
         case whitebox::errc::CONNECT_FAILED:
             return "Connect failed";
+        case whitebox::errc::CANNOT_FIND_ROBOT:
+            return "Cannot find robot";
+        case whitebox::errc::CANNOT_FIND_CONNECTION:
+            return "Cannot find connection";
         default:
             return "Unknown error";
         }

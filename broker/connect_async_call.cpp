@@ -13,7 +13,7 @@ void ConnectAsyncCall::proceed() {
 
         doRequest();
     } else if (m_state == State::PROCESS) {
-        (new ConnectAsyncCall{m_srv, m_cq, m_connMgr, m_connectorManager})->proceed();
+        (new ConnectAsyncCall{m_srv, m_cq, m_connectorManager})->proceed();
 
         m_state = State::FINISH;
 
@@ -58,7 +58,7 @@ void ConnectAsyncCall::doReply() {
     // 找到connector了，开始发起连接
     BOOST_LOG_TRIVIAL(info) << "begin connect: addr=" << addr << ", port=" << port << ", acc=" << connId.account();
 
-    connector->connect(addr, port, connId.account(), pass, [this](std::shared_ptr<Connection> conn, const std::error_code& ec, const std::string& msg) {
+    connector->connect(addr, port, connId.account(), pass, connId.index(), [this](std::shared_ptr<Connection> conn, const std::error_code& ec, const std::string& msg) {
         // 向grpc报告最终的结果
         if (ec) {
             auto e = m_reply.mutable_error();

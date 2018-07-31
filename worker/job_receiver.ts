@@ -13,7 +13,7 @@ class DummyJobReceiver implements JobReceiver {
                 account: "1000",
                 testCaseRef: "demo",
                 playerProperties: {
-                    "User.0.Address": "172.17.100.100",
+                    "User.0.Address": "172.17.100.32",
                     "User.0.Port": 31000,
                 },
             },

@@ -30,6 +30,6 @@ message Result {
 message ConnectionIdentity {
     string account = 1;
     string service = 2;
-    uint32 connectionIndex = 3;
+    uint32 index = 3;
 }
 

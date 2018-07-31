@@ -3,26 +3,17 @@
 #include <memory>
 #include <x51.grpc.pb.h>
 
-class CEvent;
+// class Connection;
+class RobotManager;
 
-class Connection {
-public:
-    void sendEvent(CEvent* ev) {}
-    void waitEvent(std::function<bool(CEvent*)> cond, std::function<void()> cb) {
-        if (cond) {
-            cb();
-        }
-    }
-};
-
-class ConnectionManager {
-public:
-    std::shared_ptr<Connection> findConnection(const std::string& acc, const std::string& srvName, int connIdx) {
-        return this->conn;        
-    }
-private:
-    std::shared_ptr<Connection> conn{new Connection};
-};
+// class ConnectionManager {
+// public:
+//     std::shared_ptr<Connection> findConnection(const std::string& acc, const std::string& srvName, int connIdx) {
+//         return this->conn;        
+//     }
+// private:
+//     std::shared_ptr<Connection> conn{new Connection};
+// };
 
 class AsyncCall {
 public:
@@ -38,7 +29,7 @@ public:
 template<typename SubClass>
 class AsyncCallImpl : public AsyncCall {
 public:
-    AsyncCallImpl(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, ConnectionManager& cm) : m_srv{srv}, m_cq{cq}, m_connMgr{cm}, m_responder{&m_ctx} {
+    AsyncCallImpl(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm) : m_srv{srv}, m_cq{cq}, m_robotManager{cm}, m_responder{&m_ctx} {
         
     }
 
@@ -51,12 +42,8 @@ public:
 
             doRequest();
         } else if (m_state == State::PROCESS) {
-            (new SubClass{m_srv, m_cq, m_connMgr})->proceed();
+            (new SubClass{m_srv, m_cq, m_robotManager})->proceed();
 
-            // std::string acc = m_request.account();
-            // std::string srv = m_request.service();
-            // int idx = m_request.connectionindex();
-            // auto conn = m_connMgr.findConnection(acc, srv, idx);
             m_state = State::FINISH;
 
             doReply();
@@ -78,5 +65,6 @@ protected:
     Result m_reply;
     grpc::ServerAsyncResponseWriter<Result> m_responder;
     State m_state{State::CREATE};
-    ConnectionManager& m_connMgr;
+    // ConnectionManager& m_connMgr;
+    RobotManager& m_robotManager;
 };

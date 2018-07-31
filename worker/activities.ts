@@ -14,10 +14,14 @@ const broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure
 // 对于send这些动作，返回值是一个枚举
 // 业务act如果失败了，是作为一个item，到js这边处理。换句话说，Result必须要能反映是否失败，如果失败，必须有失败信息；如果成功，需要有数据。
 class Result {
+  // 动作基本信息
+  metadata: any;
   // 错误信息。null表示没有错误
   error: any;
 
-  constructor(err?: any) {
+  constructor(metadata: any, err?: any) {
+    this.metadata = metadata;
+
     if (!err || err.ok) {
       this.error = null;
     } else {
@@ -41,7 +45,10 @@ interface Activity {
 // 子类应该实现doParse & doProceed
 abstract class SimpleActivity implements Activity {
   postprocessor?: PostProcessor;
-  delayTime: number = 0;
+  // 默认动作与动作之间间隔1秒。最好是可配
+  delayTime: number = 1000;
+  // 错误处理策略。这个会在postprocessor之前处理。默认是ignore。如果要修改默认值，子类应当在构造函数里赋值。
+  // 最终这个值都会被xml的on_error属性覆盖
   onErrorHandler: string = "ignore";
 
   parse(data: any): void {
@@ -54,7 +61,7 @@ abstract class SimpleActivity implements Activity {
     return this.doProceed(ctx).pipe(
       // 执行on_error的handler
       map(r => {
-        logger.info(`on_error is ${this.onErrorHandler}`);
+        // logger.info(`on_error is ${this.onErrorHandler}`);
         if (r == undefined || !r.error) {
           // 没有错误
           return r;
@@ -184,7 +191,7 @@ export class CompositeActivity implements Activity {
       // 如果某个rez的postprocessor满足某种条件，那么就应当终止队列
       // 如果error是Continue，那么不应当简单当作error，而是重头执行
       catchError((err, caught) => {
-        logger.info({catch: err}, `catched an error. isRoot=${this.isRoot}`);
+        // logger.info({catch: err}, `catched an error. isRoot=${this.isRoot}`);
         // 如果错误是restart，那就一直抛给root节点处理
         if (err instanceof RestartError && this.isRoot) {
           logger.info("restart...");
@@ -298,20 +305,25 @@ class ConnectActionActivity extends SimpleActivity {
 
     let f = (args: any, cb: any) => broker.Connect(args, cb);
 
-    return bindNodeCallback(f)({
+    let args = {
       connectionId: {
         service: this.service,
         account: robot.account,
-        connectionIndex: this.connectionIndex,
+        index: this.connectionIndex,
       },
       address: robot.getProp(this.addressKey),
       port: robot.getProp(this.portKey),
       password: "",
-    }).pipe(
+    };
+
+    return bindNodeCallback(f)(args).pipe(
       // 返回的是broker返回的result。如果grpc的错误，不会走这里，直接作为队列错误了。
       map((x: any) => {
-        logger.info({result: x}, `Connect DONE`);
-        return new Result(x.error);
+        // logger.info({result: x}, `Connect DONE`);
+        return new Result({
+          type: "connect",
+          args,
+        }, x.error);
       }),
     );
   }
@@ -324,12 +336,17 @@ class SendActionActivity extends SimpleActivity {
 
   doProceed(ctx: any): Observable<any> {
     let f = (arg, cb) => broker[`Send${this.event}`](arg, cb);
-    return bindNodeCallback(f)({
+    let args = {
       account: ctx.robot.account,
       service: this.service,
-      connectionIndex: this.connectionIndex,
-    }).pipe(
-      map((x: any) => new Result(x.error)),
+      index: this.connectionIndex,
+    };
+    return bindNodeCallback(f)(args).pipe(
+      map((x: any) => new Result({
+        type: "send",
+        event: this.event,
+        args,
+      }, x.error)),
     );
   }
 
@@ -347,12 +364,17 @@ class RecvActionActivity extends SimpleActivity {
 
   doProceed(ctx: any): Observable<any> {
     let f = (arg, cb) => broker[`Recv${this.event}`](arg, cb);
-    return bindNodeCallback(f)({
+    let args = {
       account: ctx.robot.account,
       service: this.service,
-      connectionIndex: this.connectionIndex,
-    }).pipe(
-      map((x: any) => new Result(x.error)),
+      index: this.connectionIndex,
+    };
+    return bindNodeCallback(f)(args).pipe(
+      map((x: any) => new Result({
+        type: "recv",
+        event: this.event,
+        args,
+      }, x.error)),
     );
   }
 
