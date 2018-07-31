@@ -34,6 +34,7 @@ public:
     virtual void proceed() = 0;
 };
 
+// 子类要在doReply里，或者别的什么地方（比如回调）里调用 grpc::ServerAsyncResponseWriter::Finish 方法。
 template<typename SubClass>
 class AsyncCallImpl : public AsyncCall {
 public:

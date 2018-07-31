@@ -3,6 +3,9 @@
 #include "errors.h"
 #include "connector.h"
 #include <boost/log/trivial.hpp>
+#include <fmt/format.h>
+
+using namespace fmt::literals;
 
 void ConnectAsyncCall::proceed() {
     if (m_state == State::CREATE) {
@@ -39,11 +42,14 @@ void ConnectAsyncCall::doReply() {
     if (!connector) {
         // 没有找到服务，无法连接
 
-        BOOST_LOG_TRIVIAL(warning) << "no connector for " << connId.service();
+        std::string msg = "no connector for {}"_format(connId.service());
+
+        BOOST_LOG_TRIVIAL(warning) << msg;
 
         auto e = m_reply.mutable_error();
         e->set_errorcode(int(whitebox::errc::CONNECT_FAILED));
         e->set_errorcategory(whitebox::ERROR_CATEGORY);
+        e->set_message(msg);
         m_responder.Finish(m_reply, grpc::Status::OK, this);
 
         return;
@@ -52,5 +58,14 @@ void ConnectAsyncCall::doReply() {
     // 找到connector了，开始发起连接
     BOOST_LOG_TRIVIAL(info) << "begin connect: addr=" << addr << ", port=" << port << ", acc=" << connId.account();
 
-    connector->connect(addr, port, connId.account(), pass);
+    connector->connect(addr, port, connId.account(), pass, [this](std::shared_ptr<Connection> conn, const std::error_code& ec, const std::string& msg) {
+        // 向grpc报告最终的结果
+        if (ec) {
+            auto e = m_reply.mutable_error();
+            e->set_errorcode(ec.value());
+            e->set_errorcategory(ec.category().name());
+            e->set_message(msg);
+        }
+        m_responder.Finish(m_reply, grpc::Status::OK, this);
+    });
 }

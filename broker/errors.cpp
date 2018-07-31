@@ -19,7 +19,7 @@ public:
     }
 };
 
-namespace std {
+namespace whitebox {
     std::error_code make_error_code(::whitebox::errc err) {
         static WhiteboxErrorCategory c;
         return std::error_code{int(err), c};
