@@ -9,18 +9,34 @@ import { Robot } from './robot';
 const x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
 const broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
 
+interface Metadata {
+  type: string;
+}
+
+class SendEventMetadata {
+  type: string = 'send';
+  
+  constructor(public event: string, public args: any) {}
+}
+
+class RecvEventMetadata {
+  type: string = 'recv';
+  
+  constructor(public event: string, public args: any) {}
+}
+
 // 动作的返回值。
 // 有些动作没有返回，比如sleep
 // 对于send这些动作，返回值是一个枚举
 // 业务act如果失败了，是作为一个item，到js这边处理。换句话说，Result必须要能反映是否失败，如果失败，必须有失败信息；如果成功，需要有数据。
 class Result {
   // 动作基本信息
-  metadata: any;
+  // metadata: Metadata;
   // 错误信息。null表示没有错误
   error: any;
 
-  constructor(metadata: any, err?: any) {
-    this.metadata = metadata;
+  constructor(public metadata: Metadata, err?: any) {
+    // this.metadata = metadata;
 
     if (!err || err.ok) {
       this.error = null;
@@ -280,8 +296,17 @@ class SelectActivity extends SimpleActivity {
   }
 }
 
+class ConnectMetadata implements Metadata {
+  type: string = "connect";
+ 
+  constructor(public args: any) {
+    
+  }
+}
+
 // 表示一个连接服务器的动作
 class ConnectActionActivity extends SimpleActivity {
+  
   service: string = "";
   connectionIndex: number = 0;
   addressKey: string = "";
@@ -305,10 +330,11 @@ class ConnectActionActivity extends SimpleActivity {
     let robot: Robot = ctx.robot;
 
     let f = (args: any, cb: any) => {
-      logger.info({args}, "Connect");
+      let metadata = new ConnectMetadata(args);
+      logger.info({metadata}, "Connect");
       broker.Connect(args, (error: any, result: any) => {
         logger.info({result, error}, "Connect DONE");
-        cb(result, error);
+        cb(error, result);
       });
     };
 
@@ -327,10 +353,7 @@ class ConnectActionActivity extends SimpleActivity {
       // 返回的是broker返回的result。如果grpc的错误，不会走这里，直接作为队列错误了。
       map((x: any) => {
         // logger.info({result: x}, `Connect DONE`);
-        return new Result({
-          type: "connect",
-          args,
-        }, x.error);
+        return new Result(new ConnectMetadata(args), x.error);
       }),
     );
   }
@@ -349,11 +372,7 @@ class SendActionActivity extends SimpleActivity {
       index: this.connectionIndex,
     };
     return bindNodeCallback(f)(args).pipe(
-      map((x: any) => new Result({
-        type: "send",
-        event: this.event,
-        args,
-      }, x.error)),
+      map((x: any) => new Result(new SendEventMetadata(this.event, args), x.error)),
     );
   }
 
@@ -377,11 +396,7 @@ class RecvActionActivity extends SimpleActivity {
       index: this.connectionIndex,
     };
     return bindNodeCallback(f)(args).pipe(
-      map((x: any) => new Result({
-        type: "recv",
-        event: this.event,
-        args,
-      }, x.error)),
+      map((x: any) => new Result(new RecvEventMetadata(this.event, args), x.error)),
     );
   }
 
