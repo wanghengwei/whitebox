@@ -1,7 +1,7 @@
 import grpc from 'grpc';
-import { bindNodeCallback, from, Observable, of, race } from "rxjs";
-import { catchError, concatAll, delay, filter, map, repeat, takeLast, tap } from "rxjs/operators";
-import { ContinueError } from "./errors";
+import { bindNodeCallback, from, Observable, of, race, concat, timer } from "rxjs";
+import { catchError, concatAll, delay, filter, map, repeat, takeLast, tap, ignoreElements } from "rxjs/operators";
+import { ContinueError, RestartError } from "./errors";
 import logger from "./logger";
 import { ContinuePostProcessor, PostProcessor } from "./postprocessors";
 import { Robot } from './robot';
@@ -42,6 +42,7 @@ interface Activity {
 abstract class SimpleActivity implements Activity {
   postprocessor?: PostProcessor;
   delayTime: number = 0;
+  onErrorHandler: string = "ignore";
 
   parse(data: any): void {
     this.parsePostprocessor(data.postprocessor);
@@ -50,7 +51,19 @@ abstract class SimpleActivity implements Activity {
 
   proceed(ctx: any): Observable<Result> {
     return this.doProceed(ctx).pipe(
-      // 后置处理
+      // 执行on_error的handler
+      map(r => {
+        logger.info(`on_error is ${this.onErrorHandler}`);
+        if (this.onErrorHandler == 'restart') {
+          // 如果 on_error="restart" ，那么应当重新执行整个用例。
+          throw new RestartError();
+        } else if (this.onErrorHandler == 'retry') {
+          
+        } else {
+          return r;
+        }
+      }),
+      // 执行后置处理器
       // 要求所有act都要返回点东西，不能是empty
       map((x, idx) => {
         if (!this.postprocessor) {
@@ -61,6 +74,7 @@ abstract class SimpleActivity implements Activity {
       }),
       // 延迟执行
       delay(this.delayTime),
+      // 最终只返回Result类型的对象
       filter(x => x instanceof Result)
     );
   }
@@ -88,6 +102,12 @@ abstract class SimpleActivity implements Activity {
 export class CompositeActivity implements Activity {
   activities: Array<Activity> = [];
   tag: string = "";
+  // 表示是否是根节点。用于处理一些逻辑，比如restart的on_error handler
+  isRoot: boolean;
+
+  constructor(isRoot: boolean = false) {
+    this.isRoot = isRoot;
+  }
 
   parse(data: any): void {
     let actions = data.action;
@@ -146,10 +166,20 @@ export class CompositeActivity implements Activity {
       // 如果某个rez的postprocessor满足某种条件，那么就应当终止队列
       // 如果error是Continue，那么不应当简单当作error，而是重头执行
       catchError((err, caught) => {
+        logger.info({catch: err}, `catched an error. isRoot=${this.isRoot}`);
+        // 如果错误是restart，那就一直抛给root节点处理
+        if (err instanceof RestartError && this.isRoot) {
+          logger.info("restart...");
+          // 延迟一段时间再restart。最好是可配
+          return concat(timer(5000).pipe(ignoreElements()), caught);
+        }
+
+        // 如果错误是continue，并且声明了要continue的是当前复合节点，那么就重新执行队列
         if (err instanceof ContinueError && err.tag == this.tag) {
           return caught;
         }
 
+        // 其它错误不管，抛出完事。
         throw err;
       })
     );
@@ -231,6 +261,11 @@ class ConnectActionActivity extends SimpleActivity {
   addressKey: string = "";
   portKey: string = "";
 
+  constructor() {
+    super();
+    this.onErrorHandler = "restart";
+  }
+
   doParse(data: any) {
     this.service = data['@_service'];
     this.connectionIndex = Number(data['@_conn']) || 0;
@@ -255,7 +290,11 @@ class ConnectActionActivity extends SimpleActivity {
       port: robot.getProp(this.portKey),
       password: "",
     }).pipe(
-      map((x: any) => new Result(x.error)),
+      // 返回的是broker返回的result。如果grpc的错误，不会走这里，直接作为队列错误了。
+      map((x: any) => {
+        logger.info(`grpc return ${x}`);
+        return new Result(x.error);
+      }),
     );
   }
 }

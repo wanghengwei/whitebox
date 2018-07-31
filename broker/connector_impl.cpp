@@ -50,6 +50,7 @@ void ConnectorImpl::OnConnFail(INetConnection *conn) {
         BOOST_LOG_TRIVIAL(warning) << "no callback for connect request: acc=" << acc;
         return;
     }
-
-    it->second(nullptr, whitebox::errc::CONNECT_FAILED, conn->GetErrorString());
+    auto cb = std::move(it->second);
+    m_cbs.erase(it);
+    cb(nullptr, whitebox::errc::CONNECT_FAILED, conn->GetErrorString());
 }

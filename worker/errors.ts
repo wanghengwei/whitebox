@@ -1,4 +1,5 @@
 
+// 表示 continue 一个loop节点
 export class ContinueError implements Error {
     name: string = "ContinueError";
     message: string = "";
@@ -7,4 +8,10 @@ export class ContinueError implements Error {
     constructor(tag: string = "") {
         this.tag = tag;
     }
+}
+
+// 表示要 restart 整个用例
+export class RestartError implements Error {
+    name: string = "RestartError";
+    message: string = "";
 }

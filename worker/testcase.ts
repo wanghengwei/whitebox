@@ -6,7 +6,7 @@ export class TestCase {
     act: CompositeActivity;
 
     constructor(def: any) {
-        this.act = new CompositeActivity();
+        this.act = new CompositeActivity(true);
         this.act.parse(def.test_case.template);
     }
 
