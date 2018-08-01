@@ -23,9 +23,9 @@ class: Action
 order: SendRecvEvent
 spec:
   send:
-    eventName: CEventVideoInitConnectionRequest
+    eventRef: CEventVideoInitConnectionRequest
   recv:
-    eventNames:
+    eventRefs:
     - CEventVideoInitConnectionResponse
 
 ---

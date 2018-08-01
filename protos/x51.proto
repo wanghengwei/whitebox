@@ -8,7 +8,7 @@ service Broker {
     rpc Connect (ConnectParams) returns (Result);
 
     
-    rpc ActionSendRecvEvent_CEventVideoInitConnectionRequest (ConnectionIdentity) returns (Result);
+    rpc ActionSendRecvEventCEventVideoInitConnectionRequest (ConnectionIdentity) returns (Result);
     
 }
 
