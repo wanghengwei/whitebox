@@ -1,4 +1,4 @@
-import { CompositeActivity } from "./activities";
+import { CompositeActivity } from "./activity";
 import { Robot } from "./robot";
 import { Observable } from "rxjs";
 

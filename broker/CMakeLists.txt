@@ -38,7 +38,10 @@ add_executable(broker
     connect_async_call.cpp
     connection_impl.cpp
     robot.cpp
+
+    ${MGC_SOURCES}
 )
-target_link_libraries(broker autogen mgc grpc++_unsecure protobuf fruit dl pthread ${Boost_LIBRARIES} fmt)
-target_compile_options(broker PRIVATE -Wno-format)
+target_link_libraries(broker autogen grpc++_unsecure protobuf fruit dl pthread ${Boost_LIBRARIES} fmt)
+target_compile_options(broker PRIVATE -Wno-format -include limits.h)
 target_compile_definitions(broker PRIVATE BOOST_ALL_DYN_LINK)
+target_include_directories(broker PRIVATE ${MGC_INCLUDE_DIRS})

@@ -1,4 +1,39 @@
-type: SendEvent
+# type: SendEvent
+# spec:
+#   eventName: CEventVideoInitConnectionRequest
+#   params:
+#   - field: roomID
+#     constant: "1213"
+#     type: Int32
+#   - field: uid.channel
+#     constant: "VCT_X5"
+#     type: Symbol
+# include_headers:
+# - video_platform_impl/user_proxy/event/room_proxy_events.h
+
+# ---
+# type: RecvEvent
+# spec:
+#   eventName: CEventVideoInitConnectionResponse
+# include_headers:
+# - video_platform_impl/user_proxy/event/room_proxy_events.h
+
+---
+class: Action
+order: SendRecvEvent
+spec:
+  send:
+    eventName: CEventVideoInitConnectionRequest
+  recv:
+    eventNames:
+    - CEventVideoInitConnectionResponse
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/user_proxy/event/room_proxy_events.h
 spec:
   eventName: CEventVideoInitConnectionRequest
   params:
@@ -8,12 +43,15 @@ spec:
   - field: uid.channel
     constant: "VCT_X5"
     type: Symbol
-  include_headers:
-  - video_platform_impl/user_proxy/event/room_proxy_events.h
 
 ---
-type: RecvEvent
-spec:
-  eventName: CEventVideoInitConnectionResponse
+class: Event
+order: Response
+metadata:
   include_headers:
   - video_platform_impl/user_proxy/event/room_proxy_events.h
+spec:
+  eventName: CEventVideoInitConnectionResponse
+  errorCodeField: res
+  results:
+  - field: video_zone_id

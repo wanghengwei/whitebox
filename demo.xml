@@ -6,8 +6,9 @@
         <!-- <action type="connect" service="User" conn="1"/> -->
         <!-- <action type="sleep" seconds="1"/> -->
         <!-- <action type="sleep" seconds="2"/> -->
-        <action type="send" name="CEventVideoInitConnectionRequest" service="User" conn="0"/>
-        <action type="recv" name="CEventVideoInitConnectionResponse" service="User" conn="0"/>
+        <!-- <action type="send" name="CEventVideoInitConnectionRequest" service="User" conn="0"/> -->
+        <!-- <action type="recv" name="CEventVideoInitConnectionResponse" service="User" conn="0"/> -->
+        <action type="SendRecvEvent" send="CEventVideoInitConnectionRequest" recv="CEventVideoInitConnectionResponse" service="User" conn="0"/>
         <!-- <action type="connect" service="Video" conn="0"/> -->
 
         <!-- 循环 -->

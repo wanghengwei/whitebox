@@ -12,7 +12,7 @@ if(NOT mgc_POPULATED)
     FetchContent_Populate(mgc)
 endif()
 
-set(MGC_SRC
+set(MGC_SOURCES
 video_platform_impl/share/game_event/EventFragmentManager.cpp
 video_platform_impl/common/event/room_proxy_wrap_events.cpp
 video_platform_impl/user_proxy/event/room_proxy_events.cpp
@@ -48,20 +48,22 @@ video_platform_impl/common/event/event_video_room.cpp
 video_platform_impl/common/event/video_personal_card_event_register.cpp
 )
 
-list(TRANSFORM MGC_SRC PREPEND "${mgc_SOURCE_DIR}/")
+list(TRANSFORM MGC_SOURCES PREPEND "${mgc_SOURCE_DIR}/")
 
-add_library(mgc ${MGC_SRC})
-target_include_directories(mgc 
-    PUBLIC
-        ${mgc_SOURCE_DIR} 
-        ${mgc_SOURCE_DIR}/share
-        ${mgc_SOURCE_DIR}/video_platform_impl
-        ${mgc_SOURCE_DIR}/video_platform_impl/share
-        ${mgc_SOURCE_DIR}/video_platform_impl/common
+# add_library(mgc ${MGC_SRC})
+set(MGC_INCLUDE_DIRS
+    ${mgc_SOURCE_DIR} 
+    ${mgc_SOURCE_DIR}/share
+    ${mgc_SOURCE_DIR}/video_platform_impl
+    ${mgc_SOURCE_DIR}/video_platform_impl/share
+    ${mgc_SOURCE_DIR}/video_platform_impl/common
 )
-target_compile_options(mgc 
-    PRIVATE 
-        -include limits.h
-    PUBLIC
-        -Wno-deprecated-declarations
-)
+# target_compile_options(mgc 
+#     PRIVATE 
+#         -include limits.h
+#     PUBLIC
+#         -Wno-deprecated-declarations
+# )
+
+set(MGC_SOURCES ${MGC_SOURCES} PARENT_SCOPE)
+set(MGC_INCLUDE_DIRS ${MGC_INCLUDE_DIRS} PARENT_SCOPE)

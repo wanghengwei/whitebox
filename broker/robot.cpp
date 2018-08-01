@@ -33,7 +33,7 @@ public:
         auto& m = it->second;
         auto r = m.insert(std::make_pair(connectionIndex, conn));
         if (!r.second) {
-            // fatal error!
+            // 说明之前连接过而且连上了，算错误吗？
             BOOST_ASSERT_MSG(false, "connection index duplicated");
         }
     }

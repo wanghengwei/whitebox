@@ -5,4 +5,4 @@
 
 class RobotManager;
 
-void process{{.Spec.EventName}}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm);
+void process{{.Metadata.Name}}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm);

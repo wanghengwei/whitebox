@@ -7,7 +7,7 @@ import { ContinuePostProcessor, PostProcessor } from "./postprocessors";
 import { Robot } from './robot';
 
 const x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
-const broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
+export const broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
 
 interface Metadata {
   type: string;
@@ -15,21 +15,21 @@ interface Metadata {
 
 class SendEventMetadata {
   type: string = 'send';
-  
-  constructor(public event: string, public args: any) {}
+
+  constructor(public event: string, public args: any) { }
 }
 
 class RecvEventMetadata {
   type: string = 'recv';
-  
-  constructor(public event: string, public args: any) {}
+
+  constructor(public event: string, public args: any) { }
 }
 
 // 动作的返回值。
 // 有些动作没有返回，比如sleep
 // 对于send这些动作，返回值是一个枚举
 // 业务act如果失败了，是作为一个item，到js这边处理。换句话说，Result必须要能反映是否失败，如果失败，必须有失败信息；如果成功，需要有数据。
-class Result {
+export class Result {
   // 动作基本信息
   // metadata: Metadata;
   // 错误信息。null表示没有错误
@@ -57,9 +57,10 @@ interface Activity {
   proceed(ctx: any): Observable<Result>;
 }
 
+
 // 表示简单act，只返回最多一个结果的。和loop那种不一样。
 // 子类应该实现doParse & doProceed
-abstract class SimpleActivity implements Activity {
+export abstract class SimpleActivity implements Activity {
   postprocessor?: PostProcessor;
   // 默认动作与动作之间间隔1秒。最好是可配
   delayTime: number = 1000;
@@ -102,7 +103,7 @@ abstract class SimpleActivity implements Activity {
           // 不过要把之前的结果也附带上，因为统计时要计算
           return concat(of(err.lastResult), timer(2000).pipe(ignoreElements()), this.proceed(ctx));
         }
-        
+
         throw err;
       }),
       // 执行后置处理器
@@ -178,6 +179,8 @@ export class CompositeActivity implements Activity {
         act = new SendActionActivity();
       } else if (t == 'recv') {
         act = new RecvActionActivity();
+      } else if (t == 'SendRecvEvent') {
+        act = new SendRecvEventActivity();
       }
 
       if (act == null) {
@@ -298,15 +301,15 @@ class SelectActivity extends SimpleActivity {
 
 class ConnectMetadata implements Metadata {
   type: string = "connect";
- 
+
   constructor(public args: any) {
-    
+
   }
 }
 
 // 表示一个连接服务器的动作
 class ConnectActionActivity extends SimpleActivity {
-  
+
   service: string = "";
   connectionIndex: number = 0;
   addressKey: string = "";
@@ -331,9 +334,9 @@ class ConnectActionActivity extends SimpleActivity {
 
     let f = (args: any, cb: any) => {
       let metadata = new ConnectMetadata(args);
-      logger.info({metadata}, "Connect");
+      logger.info({ metadata }, "Connect");
       broker.Connect(args, (error: any, result: any) => {
-        logger.info({result, error}, "Connect DONE");
+        logger.info({ result, error }, "Connect DONE");
         cb(error, result);
       });
     };
@@ -352,7 +355,7 @@ class ConnectActionActivity extends SimpleActivity {
     return bindNodeCallback(f)(args).pipe(
       // 返回的是broker返回的result。如果grpc的错误，不会走这里，直接作为队列错误了。
       map((x: any) => {
-        // logger.info({result: x}, `Connect DONE`);
+        // logger.info({x}, `map result of connect`);
         return new Result(new ConnectMetadata(args), x.error);
       }),
     );
@@ -402,6 +405,43 @@ class RecvActionActivity extends SimpleActivity {
 
   doParse(data: any): void {
     this.event = data['@_name'];
+    this.service = data['@_service'];
+    this.connectionIndex = Number(data['@_conn']) || 0;
+  }
+}
+
+
+class SendRecvEventMetadata {
+  type: string = "SendRecvEvent";
+
+  constructor(public args: any, public send: string, public recv: Array<string>) { }
+}
+
+export class SendRecvEventActivity extends SimpleActivity {
+  name: string = "";
+  sendEvent: string = "";
+  recvEvent: string = "";
+  service: string = "";
+  connectionIndex: number = 0;
+
+  doProceed(ctx: any): Observable<any> {
+    let f = (arg, cb) => {
+      broker[`${this.name}`](arg, cb);
+    };
+    let args = {
+      account: ctx.robot.account,
+      service: this.service,
+      index: this.connectionIndex,
+    };
+    return bindNodeCallback(f)(args).pipe(
+      map((x: any) => new Result(new SendRecvEventMetadata(args, this.sendEvent, [this.recvEvent]), x.error)),
+    );
+  }
+
+  doParse(data: any): void {
+    this.sendEvent = data['@_send'];
+    this.name = data['@_name'] || `SendRecvEvent_${this.sendEvent}`;
+    this.recvEvent = data['@_recv'];
     this.service = data['@_service'];
     this.connectionIndex = Number(data['@_conn']) || 0;
   }

@@ -1,6 +1,6 @@
-import { Observable, of, from } from "rxjs";
-import { JobDef } from "./job_def";
+import { from, Observable } from "rxjs";
 import { take } from "rxjs/operators";
+import { JobDef } from "./job_def";
 
 interface JobReceiver {
     getJobs(): Observable<JobDef>;

@@ -21,10 +21,17 @@ message Error {
     string message = 3;
 }
 
+message Data {
+    map<string, string> data = 1;
+}
+
 // 表示操作的结果
 // TODO 这里应当还有数据，不过还不知道具体怎么弄
 message Result {
-    Error error = 1;
+    oneof content {
+        Error error = 1;
+        Data data = 2;
+    }
 }
 
 message ConnectionIdentity {

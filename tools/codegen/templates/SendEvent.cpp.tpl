@@ -1,8 +1,9 @@
-{{with .Spec}}
-#include "{{.EventName}}.h"
 {{range .IncludeHeaders}}
 #include <{{.}}>
 {{end}}
+
+{{with .Spec}}
+#include "{{.EventName}}.h"
 
 #include "../robot_manager.h"
 #include "../robot.h"
