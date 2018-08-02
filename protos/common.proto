@@ -27,6 +27,7 @@ message Data {
 
 // 表示操作的结果
 // TODO 这里应当还有数据，不过还不知道具体怎么弄
+// 也许不再需要数据了？
 message Result {
     oneof content {
         Error error = 1;
@@ -34,9 +35,26 @@ message Result {
     }
 }
 
+// 唯一确定一个conn的标示类型
 message ConnectionIdentity {
     string account = 1;
     string service = 2;
     uint32 index = 3;
 }
 
+// 表示发送消息的参数
+message EventRequestParams {
+    ConnectionIdentity connectionId = 1;
+    // 其它参数，比如roomid，用map传过去
+    map<string, string> data = 2;
+}
+
+// 初始化一个robot的参数
+message InitParams {
+    string account = 1;
+    map<string, string> properties = 2;
+}
+
+message TeardownParams {
+    string account = 1;
+}

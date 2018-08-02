@@ -1,16 +1,16 @@
-export class Robot {
-    account: string;
-    properties: any;
+import logger from "./logger";
 
-    constructor(acc: string) {
-        this.account = acc;
+export class Robot {
+    properties: Map<string, string>;
+
+    constructor(public account: string) {
     }
 
-    getProp(key: string): any {
-        return this.properties[key];
+    getProp(key: string): string {
+        return this.properties.get(key);
     }
 
     setProperties(props: any) {
-        this.properties = props;
+        this.properties = new Map(Object.entries(props));
     }
 }

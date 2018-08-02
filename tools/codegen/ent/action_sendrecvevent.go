@@ -1,5 +1,7 @@
 package ent
 
+import "fmt"
+
 const (
 	ACTION_SENDRECVEVENT_HEADER_TEMPLATE = `
 #pragma once
@@ -18,6 +20,10 @@ void process{{.Metadata.FullName}}(Broker::AsyncService* srv, grpc::ServerComple
 {{end}}
 
 #include "{{.HeaderFileName}}"
+#include "{{.Spec.SendSpec.Event.HeaderFileName}}"
+{{range .Spec.RecvSpec.Events}}
+#include "{{.HeaderFileName}}"
+{{end}}
 
 #include "../robot_manager.h"
 #include "../robot.h"
@@ -27,18 +33,19 @@ void process{{.Metadata.FullName}}(Broker::AsyncService* srv, grpc::ServerComple
 
 using namespace fmt::literals;
 
-class {{.Metadata.FullName}} : public AsyncCallImpl<{{.Metadata.FullName}}> {
+class {{.Metadata.FullName}} : public AsyncCallImpl<{{.Metadata.FullName}}, EventRequestParams, Result> {
 public:
-	using AsyncCallImpl<{{.Metadata.FullName}}>::AsyncCallImpl;
+	using AsyncCallImpl<{{.Metadata.FullName}}, EventRequestParams, Result>::AsyncCallImpl;
 protected:
 	void doRequest() override {
 		m_srv->Request{{.Metadata.FullName}}(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
 	}
 
 	void doReply() override {
-		std::string acc = m_request.account();
-		std::string srv = m_request.service();
-		int idx = m_request.index();
+		auto cid = m_request.connectionid();
+		std::string acc = cid.account();
+		std::string srv = cid.service();
+		int idx = cid.index();
 
 		auto robot = m_robotManager.findRobot(acc);
 		if (!robot) {
@@ -54,17 +61,30 @@ protected:
 				e->set_errorcategory(whitebox::ERROR_CATEGORY);
 				e->set_message("cannot find connection: acc={}, srv={}, idx={}"_format(acc, srv, idx));
 			} else {
-				{{.Spec.SendSpec.EventName}} ev;
-				init_{{.Spec.SendSpec.EventName}}(ev);
+				{{.Spec.SendSpec.Event.Spec.EventName}} ev;
+				init{{.Spec.SendSpec.Event.Metadata.FullName}}(ev, m_request, *robot);
 				conn->sendEvent(&ev);
 
 				conn->waitEvent([](IEvent* ev) {
-					return false
-					{{ range .Spec.RecvSpec.EventNames }}
-					|| ev->GetCLSID() == {{.}}::_GetCLSID()
+					{{ range $i, $e := .Spec.RecvSpec.Events }}
+					if (ev->GetCLSID() == {{$e.Spec.EventName}}::_GetCLSID()) {
+						return {{$i}};
+					}
 					{{ end }}
-					;
-				}, [this]() {
+					return -1;
+				}, [this](int matchedEventIndex, IEvent* ev) {
+					{{range $i, $e := .Spec.RecvSpec.Events}}
+					if (matchedEventIndex == {{$i}}) {
+						fillReplyBy{{ $e.Metadata.FullName }}(*({{$e.Spec.EventName}}*)ev, m_reply);
+						m_responder.Finish(m_reply, grpc::Status::OK, this);
+						return;
+					}
+					{{end}}
+
+					auto e = m_reply.mutable_error();
+					e->set_errorcode((int)whitebox::errc::TIMEOUT);
+					e->set_errorcategory(whitebox::ERROR_CATEGORY);
+					e->set_message("action %s timeout"_format("{{.Metadata.FullName}}"));
 					m_responder.Finish(m_reply, grpc::Status::OK, this);
 				});
 
@@ -75,8 +95,8 @@ protected:
 	}
 };
 
-void process{{ .Metadata.Name }}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm) {
-	(new {{ .Metadata.Name }}{srv, cq, cm})->proceed();
+void process{{ .Metadata.FullName }}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm) {
+	(new {{ .Metadata.FullName }}{srv, cq, cm})->proceed();
 }
 	
 	`
@@ -86,12 +106,14 @@ type ActionSendRecvEvent struct {
 	Metadata Metadata `yaml:"metadata"`
 	Spec     struct {
 		SendSpec struct {
-			EventRef  string `yaml:"eventRef"`
-			EventName string
+			EventRef string `yaml:"eventRef"`
+			Event    *EventRequest
+			// EventName string
 		} `yaml:"send"`
 		RecvSpec struct {
-			EventRefs  []string `yaml:"eventRefs"`
-			EventNames []string
+			EventRefs []string `yaml:"eventRefs"`
+			Events    []*EventResponse
+			// EventNames []string
 		} `yaml:"recv"`
 	} `yaml:"spec"`
 
@@ -104,6 +126,10 @@ func (e *ActionSendRecvEvent) Class() string {
 
 func (e *ActionSendRecvEvent) Order() string {
 	return ORDER_SENDRECVEVENT
+}
+
+func (e *ActionSendRecvEvent) Name() string {
+	return e.Metadata.Name
 }
 
 func (e *ActionSendRecvEvent) OnParsed() error {
@@ -125,6 +151,28 @@ func (t *ActionSendRecvEvent) Generate() error {
 	err = executeTemplate(ACTION_SENDRECVEVENT_CPP_TEMPLATE, AUTOGEN_CPP_FOLDER, t.CppFileName, t)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (t *ActionSendRecvEvent) FillEventsByRef(eventMap map[string]Event) error {
+	e, ok := eventMap[t.Spec.SendSpec.EventRef]
+	if !ok {
+		return fmt.Errorf("cannot find event by ref %s", t.Spec.SendSpec.EventRef)
+	}
+
+	t.Spec.SendSpec.Event = e.(*EventRequest)
+	// t.Spec.SendSpec.EventName = e.EventName()
+
+	for _, ref := range t.Spec.RecvSpec.EventRefs {
+		e, ok = eventMap[ref]
+		if !ok {
+			return fmt.Errorf("cannot find event by ref %s", t.Spec.SendSpec.EventRef)
+		}
+
+		t.Spec.RecvSpec.Events = append(t.Spec.RecvSpec.Events, e.(*EventResponse))
+		// t.Spec.RecvSpec.EventNames = append(t.Spec.RecvSpec.EventNames, e.EventName())
 	}
 
 	return nil

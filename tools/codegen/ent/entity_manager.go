@@ -19,62 +19,13 @@ const (
 
 	AUTOGEN_CPP_FOLDER = "broker/autogen/"
 	PROTOS_FOLDER      = "protos/"
-
-	CMAKELISTS_TEMPLATE = `
-add_library(autogen
-	{{range .}}
-	{{.}}
-	{{end}}
-	)
-	target_link_libraries(autogen proto fmt)
-	target_include_directories(autogen 
-		INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} 
-		PRIVATE ${MGC_INCLUDE_DIRS}
-	)
-	target_compile_options(autogen
-		PUBLIC
-			-Wno-deprecated-declarations
-	)
-	
-`
-
-	PROTO_TEMPLATE = `
-syntax = "proto3";
-
-import "common.proto";
-
-service Broker {
-    
-    rpc Connect (ConnectParams) returns (Result);
-
-    {{range .}}
-    rpc {{.Metadata.FullName}} (ConnectionIdentity) returns (Result);
-    {{end}}
-}
-
-	`
-
-	AUTOGEN_INIT_TEMPLATE = `
-	#pragma once
-	{{range .}}
-	#include "{{.HeaderFileName}}.h"
-	{{end}}
-	
-	class RobotManager;
-	
-	void initGRPCAsyncCalls(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& rm) {
-		{{range .}}
-		process{{.Metadata.FullName}}(srv, cq, rm);
-		{{end}}
-	}
-		
-	`
 )
 
 // Entity 表示一个实体，如：Event Action
 type Entity interface {
 	Class() string
 	Order() string
+	Name() string
 	Generate() error
 	OutputFileNames() []string
 	// 用于解析后进行一些处理。比如填充一些yml文件里可能没写的值，如name字段
@@ -83,10 +34,12 @@ type Entity interface {
 
 type Event interface {
 	Entity
+	EventName() string
 }
 
 type Action interface {
 	Entity
+	FillEventsByRef(map[string]Event) error
 }
 
 type EntityManager interface {
@@ -100,7 +53,7 @@ func NewEntityManager() EntityManager {
 
 type entityManagerImpl struct {
 	events  []Event
-	actions []Event
+	actions []Action
 }
 
 func (em *entityManagerImpl) Parse(reader io.ReadSeeker) error {
@@ -154,11 +107,33 @@ func (em *entityManagerImpl) Parse(reader io.ReadSeeker) error {
 		}
 
 		if item.Class() == CLASS_ACTION {
-			em.actions = append(em.actions, item)
+			em.actions = append(em.actions, item.(Action))
 		} else if item.Class() == CLASS_EVENT {
-			em.events = append(em.events, item)
+			em.events = append(em.events, item.(Event))
 		} else {
 			return fmt.Errorf("invalid class: %s", item.Class())
+		}
+	}
+
+	// 通过event ref找到真正的 event
+
+	err := em.fillEventByRef()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (em *entityManagerImpl) fillEventByRef() error {
+	eventMap := map[string]Event{}
+	for _, event := range em.events {
+		eventMap[event.Name()] = event
+	}
+	for _, action := range em.actions {
+		err := action.FillEventsByRef(eventMap)
+		if err != nil {
+			return err
 		}
 	}
 

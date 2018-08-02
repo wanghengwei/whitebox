@@ -10,15 +10,16 @@ class DummyJobReceiver implements JobReceiver {
     getJobs(): Observable<JobDef> {
         return from([
             {
-                account: "1000",
+                account: "3400001",
                 testCaseRef: "demo",
                 playerProperties: {
-                    "User.0.Address": "172.17.100.32",
+                    // "User.0.Address": "172.17.100.32",
+                    "User.0.Address": "172.17.100.101",
                     "User.0.Port": 31000,
                 },
             },
             {
-                account: "1001",
+                account: "3400002",
                 testCaseRef: "demo",
                 playerProperties: {
                     "User.0.Address": "172.17.100.100",

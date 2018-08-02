@@ -17,6 +17,8 @@ public:
             return "Cannot find robot";
         case whitebox::errc::CANNOT_FIND_CONNECTION:
             return "Cannot find connection";
+        case whitebox::errc::TIMEOUT:
+            return "TimeOut";
         default:
             return "Unknown error";
         }

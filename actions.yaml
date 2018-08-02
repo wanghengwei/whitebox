@@ -38,10 +38,19 @@ spec:
   eventName: CEventVideoInitConnectionRequest
   params:
   - field: roomID
-    constant: "1213"
+    constant: "191"
+    type: Int32
+  - field: uid.account
+    constant: "boost::lexical_cast<long long>(request.connectionid().account())"
+    type: Expression
+  - field: uid.zoneid
+    fromPlayerData: "ROOM_ID"
     type: Int32
   - field: uid.channel
     constant: "VCT_X5"
+    type: Symbol
+  - field: logic_version
+    constant: "VIDEO_LOGIC_VERSION_NUM_CURRENT"
     type: Symbol
 
 ---
@@ -53,5 +62,6 @@ metadata:
 spec:
   eventName: CEventVideoInitConnectionResponse
   errorCodeField: res
+  errorCategory: UserProxyResult
   results:
   - field: video_zone_id

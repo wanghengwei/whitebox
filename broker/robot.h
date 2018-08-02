@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <map>
 
 class Connection;
 
@@ -10,6 +11,8 @@ public:
     virtual std::shared_ptr<Connection> findConnection(const std::string& serviceName, int connectionIndex) = 0;
 
     virtual void saveConnection(const std::string& serviceName, int connectionIndex, std::shared_ptr<Connection> conn) = 0;
+
+    virtual std::string getProperty(const std::string& key) const = 0;
 };
 
-std::shared_ptr<Robot> createRobot(std::string acc);
+std::shared_ptr<Robot> createRobot(std::string acc, std::map<std::string, std::string>&& props);

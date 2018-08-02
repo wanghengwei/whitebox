@@ -36,6 +36,8 @@ add_executable(broker
     connector_manager.cpp
     robot_manager.cpp
     connect_async_call.cpp
+    robot_setup_async_call.cpp
+    robot_teardown_async_call.cpp
     connection_impl.cpp
     robot.cpp
 

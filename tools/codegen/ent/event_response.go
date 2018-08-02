@@ -22,10 +22,10 @@ void fillReplyBy{{ .Metadata.FullName }}(const {{ .Spec.EventName }}& ev, Result
 	if (ec != 0) {
 		auto err = reply.mutable_error();
 		err->set_errorcode(ec);
+		err->set_errorcategory("{{.Spec.ErrorCategory}}");
 		return;
 	}
-	auto t = reply.mutable_data();
-	auto d = t->mutable_data();
+	auto d = reply.mutable_data()->mutable_data();
 	{{ range .Spec.Results }}
 	(*d)["{{ .Field }}"] = boost::lexical_cast<std::string>(ev.{{.Field}});
 	{{ end }}
@@ -38,7 +38,9 @@ type EventResponse struct {
 	Spec     struct {
 		EventName      string `yaml:"eventName"`
 		ErrorCodeField string `yaml:"errorCodeField"`
-		Results        []struct {
+		// 表示错误类型，如错误枚举的名字
+		ErrorCategory string `yaml:"errorCategory"`
+		Results       []struct {
 			Field    string `yaml:"field"`
 			Constant string `yaml:"isErrorCode"`
 		} `yaml:"results"`
@@ -54,6 +56,14 @@ func (e *EventResponse) Class() string {
 
 func (e *EventResponse) Order() string {
 	return ORDER_RESPONSE
+}
+
+func (e *EventResponse) Name() string {
+	return e.Metadata.Name
+}
+
+func (e *EventResponse) EventName() string {
+	return e.Spec.EventName
 }
 
 func (e *EventResponse) OnParsed() error {

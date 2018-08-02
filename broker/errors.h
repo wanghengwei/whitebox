@@ -8,6 +8,7 @@ namespace whitebox {
         CONNECT_FAILED, // 连接失败
         CANNOT_FIND_ROBOT, // 找不到机器人对象
         CANNOT_FIND_CONNECTION, // 找不到连接
+        TIMEOUT, // 超时
     };
 
     std::error_code make_error_code(::whitebox::errc err);

@@ -4,7 +4,7 @@
 
 class RobotImpl final : public Robot {
 public:
-    explicit RobotImpl(std::string acc) : m_acc{acc} {}
+    explicit RobotImpl(std::string acc, std::map<std::string, std::string>&& props) : m_acc{acc}, m_props{std::move(props)} {}
 
     RobotImpl(RobotImpl&) = delete;
     RobotImpl& operator=(RobotImpl&) = delete;
@@ -37,12 +37,23 @@ public:
             BOOST_ASSERT_MSG(false, "connection index duplicated");
         }
     }
+
+    std::string getProperty(const std::string& key) const override {
+        auto it = m_props.find(key);
+        if (it == m_props.end()) {
+            return "";
+        }
+
+        return it->second;
+    }
 private:
     std::string m_acc;
 
     std::map<std::string, std::map<int, std::shared_ptr<Connection>>> m_conns;
+
+    std::map<std::string, std::string> m_props;
 };
 
-std::shared_ptr<Robot> createRobot(std::string acc) {
-    return std::shared_ptr<Robot>{new RobotImpl{acc}};
+std::shared_ptr<Robot> createRobot(std::string acc, std::map<std::string, std::string>&& props) {
+    return std::shared_ptr<Robot>{new RobotImpl{acc, std::move(props)}};
 }

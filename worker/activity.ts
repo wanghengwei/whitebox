@@ -1,13 +1,10 @@
-import grpc from 'grpc';
 import { bindNodeCallback, from, Observable, of, race, concat, timer } from "rxjs";
 import { catchError, concatAll, delay, filter, map, repeat, takeLast, tap, ignoreElements } from "rxjs/operators";
 import { ContinueError, RestartError, RetryError } from "./errors";
 import logger from "./logger";
 import { ContinuePostProcessor, PostProcessor } from "./postprocessors";
 import { Robot } from './robot';
-
-const x51 = grpc.load(`${__dirname}/../protos/x51.proto`);
-export const broker = new x51.Broker('localhost:12345', grpc.credentials.createInsecure());
+import broker from './broker';
 
 interface Metadata {
   type: string;
@@ -426,12 +423,22 @@ export class SendRecvEventActivity extends SimpleActivity {
 
   doProceed(ctx: any): Observable<any> {
     let f = (arg, cb) => {
-      broker[`${this.name}`](arg, cb);
+      logger.info({send: this.sendEvent, recv: this.recvEvent, args}, "SendRecvEvent")
+      let cb2 = (error, result) => {
+        logger.info({send: this.sendEvent, recv: this.recvEvent, args, result, rpc_error: error}, "SendRecvEvent DONE")
+        cb(error, result);
+      };
+      // 注意这里要拼成完整名字：类型+name  
+      broker[`ActionSendRecvEvent${this.name}`](arg, cb2);
     };
+    // 设置调用rpc的参数
     let args = {
-      account: ctx.robot.account,
-      service: this.service,
-      index: this.connectionIndex,
+      connectionId: {
+        account: ctx.robot.account,
+        service: this.service,
+        index: this.connectionIndex,
+      },
+      data: {}
     };
     return bindNodeCallback(f)(args).pipe(
       map((x: any) => new Result(new SendRecvEventMetadata(args, this.sendEvent, [this.recvEvent]), x.error)),
@@ -440,7 +447,7 @@ export class SendRecvEventActivity extends SimpleActivity {
 
   doParse(data: any): void {
     this.sendEvent = data['@_send'];
-    this.name = data['@_name'] || `SendRecvEvent_${this.sendEvent}`;
+    this.name = data['@_name'] || this.sendEvent;
     this.recvEvent = data['@_recv'];
     this.service = data['@_service'];
     this.connectionIndex = Number(data['@_conn']) || 0;

@@ -1,14 +1,20 @@
 
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 import "common.proto";
 
 service Broker {
+
+	rpc RobotSetup (InitParams) returns (Error);
+
+	rpc RobotTeardown (TeardownParams) returns (Error);
     
     rpc Connect (ConnectParams) returns (Result);
 
     
-    rpc ActionSendRecvEventCEventVideoInitConnectionRequest (ConnectionIdentity) returns (Result);
+    rpc ActionSendRecvEventCEventVideoInitConnectionRequest (EventRequestParams) returns (Result);
     
 }
 

@@ -1,11 +1,13 @@
 #include "app.h"
 #include <grpc++/grpc++.h>
-#include <init_grpc_async_calls.h>
+#include <autogen_init.h>
 #include <fruit/fruit.h>
 #include "async_call.h"
 #include "connector_manager.h"
 #include "robot_manager.h"
 #include "connect_async_call.h"
+#include "robot_setup_async_call.h"
+#include "robot_teardown_async_call.h"
 #include <video_platform_impl/share/netengine/BiboFrame/BiboInterfaces.h>
 
 using namespace std::literals::chrono_literals;
@@ -45,6 +47,8 @@ public:
         // ConnectorManager* connectorManager = injector.get<ConnectorManager*>();
 
         (new ConnectAsyncCall{&broker, cq.get(), m_connectorManager})->proceed();
+        (new RobotSetupAsyncCall{&broker, cq.get(), m_robotManager})->proceed();
+        (new RobotTeardownAsyncCall{&broker, cq.get(), m_robotManager})->proceed();
         initGRPCAsyncCalls(&broker, cq.get(), m_robotManager);
 
         void* tag;

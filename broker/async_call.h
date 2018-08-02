@@ -26,7 +26,7 @@ public:
 };
 
 // 子类要在doReply里，或者别的什么地方（比如回调）里调用 grpc::ServerAsyncResponseWriter::Finish 方法。
-template<typename SubClass>
+template<typename SubClass, typename ParamType, typename ResultType>
 class AsyncCallImpl : public AsyncCall {
 public:
     AsyncCallImpl(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm) : m_srv{srv}, m_cq{cq}, m_robotManager{cm}, m_responder{&m_ctx} {
@@ -61,9 +61,10 @@ protected:
     Broker::AsyncService* m_srv;
     grpc::ServerCompletionQueue* m_cq;
     grpc::ServerContext m_ctx;
-    ConnectionIdentity m_request;
-    Result m_reply;
-    grpc::ServerAsyncResponseWriter<Result> m_responder;
+    // ConnectionIdentity m_request;
+    ParamType m_request;
+    ResultType m_reply;
+    grpc::ServerAsyncResponseWriter<ResultType> m_responder;
     State m_state{State::CREATE};
     // ConnectionManager& m_connMgr;
     RobotManager& m_robotManager;
