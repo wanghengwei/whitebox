@@ -52,9 +52,10 @@ message EventRequestParams {
 // 初始化一个robot的参数
 message InitParams {
     string account = 1;
-    map<string, string> properties = 2;
+    map<string, string> playerData = 2;
 }
 
+// 销毁一个robot的参数
 message TeardownParams {
     string account = 1;
 }

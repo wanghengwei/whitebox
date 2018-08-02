@@ -12,7 +12,7 @@ class DummyJobReceiver implements JobReceiver {
             {
                 account: "3400001",
                 testCaseRef: "demo",
-                playerProperties: {
+                playerData: {
                     // "User.0.Address": "172.17.100.32",
                     "User.0.Address": "172.17.100.101",
                     "User.0.Port": 31000,
@@ -21,7 +21,7 @@ class DummyJobReceiver implements JobReceiver {
             {
                 account: "3400002",
                 testCaseRef: "demo",
-                playerProperties: {
+                playerData: {
                     "User.0.Address": "172.17.100.100",
                     "User.0.Port": 31000,
                 },

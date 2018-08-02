@@ -7,11 +7,11 @@ const (
 #pragma once
 
 #include <x51.grpc.pb.h>
-#include "../async_call.h"
+#include "../async_call_impl.h"
 
-class RobotManager;
+class AsyncCallFactory;
 
-void process{{.Metadata.FullName}}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm);
+void process{{.Metadata.FullName}}(AsyncCallFactory& fac);
 	`
 
 	ACTION_SENDRECVEVENT_CPP_TEMPLATE = `
@@ -37,8 +37,8 @@ class {{.Metadata.FullName}} : public AsyncCallImpl<{{.Metadata.FullName}}, Even
 public:
 	using AsyncCallImpl<{{.Metadata.FullName}}, EventRequestParams, Result>::AsyncCallImpl;
 protected:
-	void doRequest() override {
-		m_srv->Request{{.Metadata.FullName}}(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
+	RequestMethod getRequestMethod() override {
+		return &::Broker::AsyncService::Request{{.Metadata.FullName}};
 	}
 
 	void doReply() override {
@@ -47,7 +47,7 @@ protected:
 		std::string srv = cid.service();
 		int idx = cid.index();
 
-		auto robot = m_robotManager.findRobot(acc);
+		auto robot = m_robotManager->findRobot(acc);
 		if (!robot) {
 			auto e = m_reply.mutable_error();
 			e->set_errorcode((int)whitebox::errc::CANNOT_FIND_ROBOT);
@@ -95,8 +95,8 @@ protected:
 	}
 };
 
-void process{{ .Metadata.FullName }}(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& cm) {
-	(new {{ .Metadata.FullName }}{srv, cq, cm})->proceed();
+void process{{ .Metadata.FullName }}(AsyncCallFactory& fac) {
+	fac.create<{{ .Metadata.FullName }}>()->proceed();
 }
 	
 	`

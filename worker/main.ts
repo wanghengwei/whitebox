@@ -1,9 +1,6 @@
-import pino from 'pino';
-import broker from './broker';
 import { Job } from './job';
 import jobReceiver from './job_receiver';
-
-const logger = pino({ prettyPrint: true });
+import logger from './logger';
 
 class JobManager {
     jobs: Array<Job> = [];
@@ -30,7 +27,8 @@ function main() {
             logger.error({ error: err }, "job error");
         }, () => {
             logger.info("all done");
-            broker.RobotTeardown({account: jd.account}, (err, res) => {});
+            // broker.RobotTeardown({account: jd.account}, (err, res) => {});
+            job.teardownRobot();
         });
     });
 }

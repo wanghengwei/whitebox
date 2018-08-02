@@ -13,8 +13,8 @@ export class Job {
     stopNotifier: Subject<boolean>;
 
     constructor(def: JobDef) {
-        this.robot = new Robot(def.account);
-        this.robot.setProperties(def.playerProperties);
+        this.robot = new Robot(def.account, def.playerData);
+        // this.robot.setProperties(def.playerData);
         this.testCase = testCaseManager.findTestCase(def.testCaseRef);
         this.stopNotifier = new Subject();
     }
@@ -26,27 +26,39 @@ export class Job {
     run() {
         logger.info({robot: this.robot}, "start running job");
 
-        // 首先初始化机器人的一些自定义数据
-        let setup = (args, cb) => {
+        // setup 成功后，
+        // 等testcase到位了才开始执行
+        // 如果setup 失败了，testcase也没必要等了，直接作为错误
+        return concat(this.setupRobot(), this.testCase).pipe(
+            flatMap(tc => tc.run(this.robot, this.stopNotifier)),
+        );
+    }
+
+    // 初始化robot
+    setupRobot(): Observable<any> {
+        let f = (args, cb) => {
             try {
-                logger.info("setup robot");
-                broker.RobotSetup(args, cb);
+                logger.info({args}, "setupRobot");
+
+                let cb2 = (err, res) => {
+                    logger.info({rpc_error: err, result: res}, "setupRobot DONE");
+                    cb(err, res);
+                };
+                args.playerData = new Map(Object.entries(args.playerData));
+                broker.RobotSetup(args, cb2);
             } catch (e) {
-                logger.error({exception: e}, "setup robot failed");
+                logger.error({exception: e}, "setupRobot FAILED");
                 throw e;
             }
         };
         let args = {
             account: this.robot.account,
-            properties: this.robot.properties,
+            playerData: this.robot.playerData,
         };
-        let setupResult = bindNodeCallback(setup)(args).pipe(ignoreElements());
+        return bindNodeCallback(f)(args).pipe(ignoreElements());
+    }
 
-        // setup 成功后，
-        // 等testcase到位了才开始执行
-        // 如果setup 失败了，testcase也没必要等了，直接作为错误
-        return concat(setupResult, this.testCase).pipe(
-            flatMap(tc => tc.run(this.robot, this.stopNotifier)),
-        );
+    teardownRobot() {
+        broker.RobotTeardown({account: this.robot.account}, (err, res) => {});
     }
 }

@@ -16,39 +16,43 @@ class AppImpl final : public App {
 public:
     INJECT(AppImpl(
         ConnectorManager& cm, 
-        RobotManager& rm
+        RobotManager& rm,
+        CompletionQueueComponent& cq,
+        AsyncService& asrv,
+        AsyncCallFactory& acf
     )) : 
         m_connectorManager{cm},
-        m_robotManager{rm}
+        m_robotManager{rm},
+        m_completionQueueComponent{cq},
+        m_asyncService{asrv},
+        m_asyncCallFactory{acf}
     {}
 
     int run() {
         // 设置x51的log
         GetLogInterface()->SetSystemPriority(900);
 
-        // initAllEventRegister();
-
         std::string addr{"0.0.0.0:12345"};
 
-        // ConnectionManager connMgr;
-
-        Broker::AsyncService broker;
+        Broker::AsyncService& broker = &m_asyncService.get();
         
         grpc::ServerBuilder builder;
         builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
         
         builder.RegisterService(&broker);
 
-        std::unique_ptr<grpc::ServerCompletionQueue> cq = builder.AddCompletionQueue();
+        // std::unique_ptr<grpc::ServerCompletionQueue> cq = builder.AddCompletionQueue();
+        m_completionQueueComponent.set(builder.AddCompletionQueue());
 
         auto server = builder.BuildAndStart();
 
-        // fruit::Injector<ConnectorManager> injector{getConnectorManager};
-        // ConnectorManager* connectorManager = injector.get<ConnectorManager*>();
+        // (new ConnectAsyncCall{&broker, cq.get(), m_connectorManager})->proceed();
+        m_asyncCallFactory.create<ConnectAsyncCall>()->proceed();
+        // (new RobotSetupAsyncCall{&broker, cq.get(), m_robotManager})->proceed();
+        m_asyncCallFactory.create<RobotSetupAsyncCall>()->proceed();
+        // (new RobotTeardownAsyncCall{&broker, cq.get(), m_robotManager})->proceed();
+        m_asyncCallFactory.create<RobotTeardownAsyncCall>()->proceed();
 
-        (new ConnectAsyncCall{&broker, cq.get(), m_connectorManager})->proceed();
-        (new RobotSetupAsyncCall{&broker, cq.get(), m_robotManager})->proceed();
-        (new RobotTeardownAsyncCall{&broker, cq.get(), m_robotManager})->proceed();
         initGRPCAsyncCalls(&broker, cq.get(), m_robotManager);
 
         void* tag;
@@ -62,7 +66,7 @@ public:
 
             while (true) {
                 // 在deadline前一直取，直到时间到为止。
-                auto nst = cq->AsyncNext(&tag, &ok, deadline);
+                auto nst = m_completionQueueComponent.get().AsyncNext(&tag, &ok, deadline);
 
                 if (nst == grpc::CompletionQueue::SHUTDOWN) {
                     // 不应该的情况
@@ -84,6 +88,9 @@ public:
 private:
     ConnectorManager& m_connectorManager;
     RobotManager& m_robotManager;
+    AsyncService& m_asyncService;
+    CompletionQueueComponent& m_completionQueueComponent;
+    AsyncCallFactory& m_asyncCallFactory;
 };
 
 fruit::Component<App> getApp() {
@@ -91,5 +98,8 @@ fruit::Component<App> getApp() {
         .bind<App, AppImpl>()
         .install(getRobotManager)
         .install(getConnectorManager)
+        .install(getAsyncService)
+        .install(getCompletionQueueComponent)
+        .install(getAsyncCallFactory)
     ;
 }

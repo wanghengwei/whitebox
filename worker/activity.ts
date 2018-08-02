@@ -6,7 +6,7 @@ import { ContinuePostProcessor, PostProcessor } from "./postprocessors";
 import { Robot } from './robot';
 import broker from './broker';
 
-interface Metadata {
+export interface Metadata {
   type: string;
 }
 
@@ -138,6 +138,9 @@ export abstract class SimpleActivity implements Activity {
     }
   }
 }
+
+import { SendRecvEventActivity } from "./sendrecvevent_activity";
+import { ConnectActionActivity } from './connect_activity';
 
 export class CompositeActivity implements Activity {
   activities: Array<Activity> = [];
@@ -296,69 +299,6 @@ class SelectActivity extends SimpleActivity {
   }
 }
 
-class ConnectMetadata implements Metadata {
-  type: string = "connect";
-
-  constructor(public args: any) {
-
-  }
-}
-
-// 表示一个连接服务器的动作
-class ConnectActionActivity extends SimpleActivity {
-
-  service: string = "";
-  connectionIndex: number = 0;
-  addressKey: string = "";
-  portKey: string = "";
-
-  constructor() {
-    super();
-    this.onErrorHandler = "restart";
-  }
-
-  doParse(data: any) {
-    this.service = data['@_service'];
-    this.connectionIndex = Number(data['@_conn']) || 0;
-    this.addressKey = data['@_address'] || `${this.service}.${this.connectionIndex}.Address`;
-    this.portKey = data['@_port'] || `${this.service}.${this.connectionIndex}.Port`;
-
-    logger.info("ConnectActionActivity parsed");
-  }
-
-  doProceed(ctx: any): Observable<any> {
-    let robot: Robot = ctx.robot;
-
-    let f = (args: any, cb: any) => {
-      let metadata = new ConnectMetadata(args);
-      logger.info({ metadata }, "Connect");
-      broker.Connect(args, (error: any, result: any) => {
-        logger.info({ result, error }, "Connect DONE");
-        cb(error, result);
-      });
-    };
-
-    let args = {
-      connectionId: {
-        service: this.service,
-        account: robot.account,
-        index: this.connectionIndex,
-      },
-      address: robot.getProp(this.addressKey),
-      port: robot.getProp(this.portKey),
-      password: "",
-    };
-
-    return bindNodeCallback(f)(args).pipe(
-      // 返回的是broker返回的result。如果grpc的错误，不会走这里，直接作为队列错误了。
-      map((x: any) => {
-        // logger.info({x}, `map result of connect`);
-        return new Result(new ConnectMetadata(args), x.error);
-      }),
-    );
-  }
-}
-
 class SendActionActivity extends SimpleActivity {
   event: string = "";
   service: string = "";
@@ -402,53 +342,6 @@ class RecvActionActivity extends SimpleActivity {
 
   doParse(data: any): void {
     this.event = data['@_name'];
-    this.service = data['@_service'];
-    this.connectionIndex = Number(data['@_conn']) || 0;
-  }
-}
-
-
-class SendRecvEventMetadata {
-  type: string = "SendRecvEvent";
-
-  constructor(public args: any, public send: string, public recv: Array<string>) { }
-}
-
-export class SendRecvEventActivity extends SimpleActivity {
-  name: string = "";
-  sendEvent: string = "";
-  recvEvent: string = "";
-  service: string = "";
-  connectionIndex: number = 0;
-
-  doProceed(ctx: any): Observable<any> {
-    let f = (arg, cb) => {
-      logger.info({send: this.sendEvent, recv: this.recvEvent, args}, "SendRecvEvent")
-      let cb2 = (error, result) => {
-        logger.info({send: this.sendEvent, recv: this.recvEvent, args, result, rpc_error: error}, "SendRecvEvent DONE")
-        cb(error, result);
-      };
-      // 注意这里要拼成完整名字：类型+name  
-      broker[`ActionSendRecvEvent${this.name}`](arg, cb2);
-    };
-    // 设置调用rpc的参数
-    let args = {
-      connectionId: {
-        account: ctx.robot.account,
-        service: this.service,
-        index: this.connectionIndex,
-      },
-      data: {}
-    };
-    return bindNodeCallback(f)(args).pipe(
-      map((x: any) => new Result(new SendRecvEventMetadata(args, this.sendEvent, [this.recvEvent]), x.error)),
-    );
-  }
-
-  doParse(data: any): void {
-    this.sendEvent = data['@_send'];
-    this.name = data['@_name'] || this.sendEvent;
-    this.recvEvent = data['@_recv'];
     this.service = data['@_service'];
     this.connectionIndex = Number(data['@_conn']) || 0;
   }

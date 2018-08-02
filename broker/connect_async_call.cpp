@@ -7,26 +7,30 @@
 
 using namespace fmt::literals;
 
-void ConnectAsyncCall::proceed() {
-    if (m_state == State::CREATE) {
-        m_state = State::PROCESS;
+// void ConnectAsyncCall::proceed() {
+//     if (m_state == State::CREATE) {
+//         m_state = State::PROCESS;
 
-        doRequest();
-    } else if (m_state == State::PROCESS) {
-        (new ConnectAsyncCall{m_srv, m_cq, m_connectorManager})->proceed();
+//         doRequest();
+//     } else if (m_state == State::PROCESS) {
+//         (new ConnectAsyncCall{m_srv, m_cq, m_connectorManager})->proceed();
 
-        m_state = State::FINISH;
+//         m_state = State::FINISH;
 
-        doReply();
-    } else if (m_state == State::FINISH) {
-        delete this;
-    } else {
-        assert(false);
-    }
-}
+//         doReply();
+//     } else if (m_state == State::FINISH) {
+//         delete this;
+//     } else {
+//         assert(false);
+//     }
+// }
 
-void ConnectAsyncCall::doRequest() {
-    m_srv->RequestConnect(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
+// void ConnectAsyncCall::doRequest() {
+//     m_srv->RequestConnect(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
+// }
+
+RequestMethod ConnectAsyncCall::getRequestMethod() {
+    return &::Broker::AsyncService::RequestConnect;
 }
 
 void ConnectAsyncCall::doReply() {

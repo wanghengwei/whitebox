@@ -1,8 +1,9 @@
 #include "robot_setup_async_call.h"
 #include "robot_manager.h"
 
-void RobotSetupAsyncCall::doRequest() {
-    m_srv->RequestRobotSetup(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
+RequestMethod RobotSetupAsyncCall::getRequestMethod() {
+    // m_srv->RequestRobotSetup(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
+    return &::Broker::AsyncService::RequestRobotSetup;
 }
 
 void RobotSetupAsyncCall::doReply() {
@@ -12,7 +13,7 @@ void RobotSetupAsyncCall::doReply() {
 
     std::map<std::string, std::string> m{props.begin(), props.end()};
 
-    m_robotManager.setupRobot(acc, std::move(m));
+    m_robotManager->setupRobot(acc, std::move(m));
 
     m_responder.Finish(m_reply, grpc::Status::OK, this);
 }
