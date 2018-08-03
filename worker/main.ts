@@ -1,17 +1,7 @@
 import { Job } from './job';
+import jobManager from './job_manager';
 import jobReceiver from './job_receiver';
 import logger from './logger';
-import { proto } from './broker';
-
-class JobManager {
-    jobs: Array<Job> = [];
-
-    addJob(job: Job) {
-        this.jobs.push(job);
-    }
-}
-
-var jobManager = new JobManager();
 
 function main() {
     jobReceiver.getJobs().subscribe(jd => {

@@ -3,30 +3,21 @@ import { JobDef } from "./job_def";
 import { Robot } from "./robot";
 import { TestCase } from './testcase';
 import testCaseManager from './testcase_manager';
-import { flatMap } from "rxjs/operators";
-
-class Job {
-    robot: Robot;
-    testCase: Observable<TestCase>;
-    stopNotifier: Subject<any>;
-
-    constructor(def: JobDef) {
-        this.robot = new Robot(def.account, def.playerData);
-        this.testCase = testCaseManager.findTestCase(def.testCaseRef);
-        this.stopNotifier = new Subject();
-    }
-
-    stop() {
-        this.stopNotifier.complete();
-    }
-
-    run() {
-        return this.testCase.pipe(
-            flatMap(tc => tc.run(this.robot, this.stopNotifier)),
-        );
-    }
-}
+import { flatMap, single } from "rxjs/operators";
+import logger from "./logger";
+import { Job } from "./job";
 
 interface JobManager {
     addJob(job: Job);
 }
+
+
+class JobManagerImpl implements JobManager {
+    jobs: Array<Job> = [];
+
+    addJob(job: Job) {
+        this.jobs.push(job);
+    }
+}
+
+export default new JobManagerImpl();
