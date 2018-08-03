@@ -1,6 +1,7 @@
 #include "robot_setup_async_call.h"
 #include "async_call_impl.h"
 #include "robot_manager.h"
+#include <boost/log/trivial.hpp>
 
 class RobotSetupAsyncCall final : public AsyncCallImpl<RobotSetupAsyncCall, InitParams, Error> {
 public:
@@ -16,6 +17,8 @@ public:
         auto props = request().playerdata();
 
         std::map<std::string, std::string> m{props.begin(), props.end()};
+
+        BOOST_LOG_TRIVIAL(info) << "setup a robot: account=" << acc << ", sizeOfData=" << props.size();
 
         m_robotManager.setupRobot(acc, std::move(m));
 

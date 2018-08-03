@@ -4,7 +4,7 @@ import { TestCase } from "./testcase";
 import { JobDef } from "./job_def";
 import testCaseManager from './testcase_manager';
 import { flatMap, ignoreElements } from "rxjs/operators";
-import broker from './broker';
+import broker, {proto} from './broker';
 import logger from "./logger";
 
 export class Job {
@@ -44,7 +44,6 @@ export class Job {
                     logger.info({rpc_error: err, result: res}, "setupRobot DONE");
                     cb(err, res);
                 };
-                args.playerData = new Map(Object.entries(args.playerData));
                 broker.RobotSetup(args, cb2);
             } catch (e) {
                 logger.error({exception: e}, "setupRobot FAILED");

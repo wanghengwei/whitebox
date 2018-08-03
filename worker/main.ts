@@ -1,6 +1,7 @@
 import { Job } from './job';
 import jobReceiver from './job_receiver';
 import logger from './logger';
+import { proto } from './broker';
 
 class JobManager {
     jobs: Array<Job> = [];

@@ -54,7 +54,7 @@ class ConnectMetadata implements Metadata {
           index: this.connectionIndex,
         },
         address: robot.playerData[this.addressKey],
-        port: robot.playerData[this.portKey],
+        port: Number(robot.playerData[this.portKey]),
         password: "",
       };
   

@@ -24,7 +24,7 @@ spec:
     expression: "request.connectionid().account()"
     type: LongLong
   - field: uid.zoneid
-    fromPlayerData: "ROOM_ID"
+    fromPlayerData: "ZONE_ID"
     type: Int
   - field: uid.channel
     constant: "VCT_X5"
