@@ -9,6 +9,10 @@ public:
     RobotImpl(RobotImpl&) = delete;
     RobotImpl& operator=(RobotImpl&) = delete;
 
+    const std::string& account() const override {
+        return m_acc;
+    }
+
     std::shared_ptr<Connection> findConnection(const std::string& serviceName, int connectionIndex) override {
         auto it = m_conns.find(serviceName);
         if (it == m_conns.end()) {

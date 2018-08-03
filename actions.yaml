@@ -21,7 +21,7 @@ spec:
     constant: "191"
     type: Int
   - field: uid.account
-    expression: "request.connectionid().account()"
+    expression: "robot.account()"
     type: LongLong
   - field: uid.zoneid
     fromPlayerData: "ZONE_ID"
@@ -45,3 +45,38 @@ spec:
   errorCategory: UserProxyResult
   results:
   - field: video_zone_id
+    key: ZONE_ID
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventVideoRoomEnterRoom
+  params:
+  - field: m_room_id
+    fromPlayerData: "ROOM_ID"
+    type: Int
+  - field: m_nick
+    expression: "robot.account()"
+  - field: m_source
+    constant: "ERS_Normal"
+    type: Symbol
+
+---
+class: Event
+order: Response
+metadata:
+spec:
+  eventName: CEventVideoRoomEnterRoomRes
+  errorCodeField: m_result
+  errorCategory: VideoRoomErrorCode
+  results:
+  - field: m_info.live_detail.anchor_pstid.id
+    key: ANCHOR_QQ
+  - field: vip_level
+    key: VIP_LEVEL
+  - field: vip_expire
+    key: VIP_EXPIRE
