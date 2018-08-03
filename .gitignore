@@ -10,4 +10,4 @@ vendor/
 /codegen
 
 /activity_diagram/*.js
-/worker/*.js
+/worker/**/*.js

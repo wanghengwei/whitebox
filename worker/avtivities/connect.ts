@@ -1,9 +1,10 @@
-import { SimpleActivity, Result, Metadata } from "./activity";
-import logger from "./logger";
+import { Result, Metadata } from "../activity";
+import logger from "../logger";
 import { Observable, bindNodeCallback } from "rxjs";
-import { Robot } from "./robot";
-import broker from "./broker";
+import { Robot } from "../robot";
+import broker from "../broker";
 import { map } from "rxjs/operators";
+import { SimpleActivity } from "./simple";
 
 class ConnectMetadata implements Metadata {
     type: string = "connect";

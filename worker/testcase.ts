@@ -1,6 +1,6 @@
-import { CompositeActivity } from "./activity";
 import { Robot } from "./robot";
 import { Observable } from "rxjs";
+import { CompositeActivity } from "./avtivities/composite";
 
 export class TestCase {
     act: CompositeActivity;

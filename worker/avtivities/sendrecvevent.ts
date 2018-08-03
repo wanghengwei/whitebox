@@ -1,8 +1,9 @@
-import { SimpleActivity, Result } from "./activity";
+import { Result } from "../activity";
 import { Observable, bindNodeCallback } from "rxjs";
-import logger from "./logger";
-import broker from "./broker";
+import logger from "../logger";
+import broker from "../broker";
 import { map } from "rxjs/operators";
+import { SimpleActivity } from "./simple";
 
 
 class SendRecvEventMetadata {
