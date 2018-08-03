@@ -59,6 +59,9 @@ export class Job {
     }
 
     teardownRobot() {
-        broker.RobotTeardown({account: this.robot.account}, (err, res) => {});
+        logger.info({account: this.robot.account}, `teardownRobot`);
+        broker.RobotTeardown({account: this.robot.account}, (err, res) => {
+            logger.info({grpc_error: err, result: res}, "teardownRobot DONE");
+        });
     }
 }

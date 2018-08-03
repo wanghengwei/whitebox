@@ -1,24 +1,4 @@
-# type: SendEvent
-# spec:
-#   eventName: CEventVideoInitConnectionRequest
-#   params:
-#   - field: roomID
-#     constant: "1213"
-#     type: Int32
-#   - field: uid.channel
-#     constant: "VCT_X5"
-#     type: Symbol
-# include_headers:
-# - video_platform_impl/user_proxy/event/room_proxy_events.h
 
-# ---
-# type: RecvEvent
-# spec:
-#   eventName: CEventVideoInitConnectionResponse
-# include_headers:
-# - video_platform_impl/user_proxy/event/room_proxy_events.h
-
----
 class: Action
 order: SendRecvEvent
 spec:
@@ -39,13 +19,13 @@ spec:
   params:
   - field: roomID
     constant: "191"
-    type: Int32
+    type: Int
   - field: uid.account
-    constant: "boost::lexical_cast<long long>(request.connectionid().account())"
-    type: Expression
+    expression: "request.connectionid().account()"
+    type: LongLong
   - field: uid.zoneid
     fromPlayerData: "ROOM_ID"
-    type: Int32
+    type: Int
   - field: uid.channel
     constant: "VCT_X5"
     type: Symbol

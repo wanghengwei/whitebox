@@ -48,10 +48,11 @@ service Broker {
 	{{end}}
 	
 	class RobotManager;
+	class Server;
 	
-	void initGRPCAsyncCalls(Broker::AsyncService* srv, grpc::ServerCompletionQueue* cq, RobotManager& rm) {
+	void initGRPCAsyncCalls(Server& svr, RobotManager& rm) {
 		{{range .}}
-		process{{.Metadata.FullName}}(srv, cq, rm);
+		create{{.Metadata.FullName}}(svr, rm)->proceed();
 		{{end}}
 	}
 		

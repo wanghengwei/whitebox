@@ -1,4 +1,5 @@
 #include "connect_async_call.h"
+#include "async_call_impl.h"
 #include "connector_manager.h"
 #include "errors.h"
 #include "connector.h"
@@ -7,69 +8,74 @@
 
 using namespace fmt::literals;
 
-// void ConnectAsyncCall::proceed() {
-//     if (m_state == State::CREATE) {
-//         m_state = State::PROCESS;
+// 用于连接服务器的异步操作
+class ConnectAsyncCall final : public AsyncCallImpl<ConnectAsyncCall, ConnectParams, Result> {
+public:
+    ConnectAsyncCall(
+        Server& svr,
+        ConnectorManager& cm
+    ) :
+        AsyncCallImpl{svr},
+        m_connectorManager{cm}
+    {}
 
-//         doRequest();
-//     } else if (m_state == State::PROCESS) {
-//         (new ConnectAsyncCall{m_srv, m_cq, m_connectorManager})->proceed();
+protected:
 
-//         m_state = State::FINISH;
-
-//         doReply();
-//     } else if (m_state == State::FINISH) {
-//         delete this;
-//     } else {
-//         assert(false);
-//     }
-// }
-
-// void ConnectAsyncCall::doRequest() {
-//     m_srv->RequestConnect(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
-// }
-
-RequestMethod ConnectAsyncCall::getRequestMethod() {
-    return &::Broker::AsyncService::RequestConnect;
-}
-
-void ConnectAsyncCall::doReply() {
-    std::string addr = m_request.address();
-    uint16_t port = m_request.port();
-    auto connId = m_request.connectionid();
-    std::string pass = m_request.password();
-
-    BOOST_LOG_TRIVIAL(info) << "find connector for " << connId.service();
-
-    // 真正发起连接。需要找到对应服务的Connector
-    auto connector = m_connectorManager.findConnector(connId.service());
-    if (!connector) {
-        // 没有找到服务，无法连接
-
-        std::string msg = "no connector for {}"_format(connId.service());
-
-        BOOST_LOG_TRIVIAL(warning) << msg;
-
-        auto e = m_reply.mutable_error();
-        e->set_errorcode(int(whitebox::errc::CONNECT_FAILED));
-        e->set_errorcategory(whitebox::ERROR_CATEGORY);
-        e->set_message(msg);
-        m_responder.Finish(m_reply, grpc::Status::OK, this);
-
-        return;
+    AsyncRequestMethod getRequestMethod() const override {
+        return &::Broker::AsyncService::RequestConnect;
     }
 
-    // 找到connector了，开始发起连接
-    BOOST_LOG_TRIVIAL(info) << "begin connect: addr=" << addr << ", port=" << port << ", acc=" << connId.account();
+    AsyncCall* createNewInstance() override {
+        return createConnectAsyncCall(server(), m_connectorManager);
+    }
 
-    connector->connect(addr, port, connId.account(), pass, connId.index(), [this](std::shared_ptr<Connection> conn, const std::error_code& ec, const std::string& msg) {
-        // 向grpc报告最终的结果
-        if (ec) {
-            auto e = m_reply.mutable_error();
-            e->set_errorcode(ec.value());
-            e->set_errorcategory(ec.category().name());
+    void doReply() override {
+        std::string addr = request().address();
+        uint16_t port = request().port();
+        auto connId = request().connectionid();
+        std::string pass = request().password();
+
+        BOOST_LOG_TRIVIAL(info) << "find connector for " << connId.service();
+
+        // 真正发起连接。需要找到对应服务的Connector
+        auto connector = m_connectorManager.findConnector(connId.service());
+        if (!connector) {
+            // 没有找到服务，无法连接
+
+            std::string msg = "no connector for {}"_format(connId.service());
+
+            BOOST_LOG_TRIVIAL(warning) << msg;
+
+            auto e = reply().mutable_error();
+            e->set_errorcode(int(whitebox::errc::CONNECT_FAILED));
+            e->set_errorcategory(whitebox::ERROR_CATEGORY);
             e->set_message(msg);
+            // m_responder.Finish(m_reply, grpc::Status::OK, this);
+            finish();
+
+            return;
         }
-        m_responder.Finish(m_reply, grpc::Status::OK, this);
-    });
+
+        // 找到connector了，开始发起连接
+        BOOST_LOG_TRIVIAL(info) << "begin connect: addr=" << addr << ", port=" << port << ", acc=" << connId.account();
+
+        connector->connect(addr, port, connId.account(), pass, connId.index(), [this](std::shared_ptr<Connection> conn, const std::error_code& ec, const std::string& msg) {
+            // 向grpc报告最终的结果
+            if (ec) {
+                auto e = reply().mutable_error();
+                e->set_errorcode(ec.value());
+                e->set_errorcategory(ec.category().name());
+                e->set_message(msg);
+            }
+            // m_responder.Finish(m_reply, grpc::Status::OK, this);
+            finish();
+        });
+    }
+private:
+    ConnectorManager& m_connectorManager;
+};
+
+
+AsyncCall* createConnectAsyncCall(Server& svr, ConnectorManager& cm) {
+    return new ConnectAsyncCall{svr, cm};
 }

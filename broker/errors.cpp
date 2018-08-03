@@ -18,7 +18,9 @@ public:
         case whitebox::errc::CANNOT_FIND_CONNECTION:
             return "Cannot find connection";
         case whitebox::errc::TIMEOUT:
-            return "TimeOut";
+            return "Time out";
+        case whitebox::errc::BAD_CAST:
+            return "Bad cast";
         default:
             return "Unknown error";
         }

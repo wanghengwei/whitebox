@@ -6,12 +6,12 @@ const (
 	ACTION_SENDRECVEVENT_HEADER_TEMPLATE = `
 #pragma once
 
-#include <x51.grpc.pb.h>
-#include "../async_call_impl.h"
+#include "../async_call.h"
 
-class AsyncCallFactory;
+class RobotManager;
+class Server;
 
-void process{{.Metadata.FullName}}(AsyncCallFactory& fac);
+AsyncCall* create{{.Metadata.FullName}}(Server&, RobotManager&);
 	`
 
 	ACTION_SENDRECVEVENT_CPP_TEMPLATE = `
@@ -25,44 +25,59 @@ void process{{.Metadata.FullName}}(AsyncCallFactory& fac);
 #include "{{.HeaderFileName}}"
 {{end}}
 
+#include "../async_call_impl.h"
 #include "../robot_manager.h"
 #include "../robot.h"
 #include "../connection.h"
 #include "../errors.h"
 #include <fmt/format.h>
+#include <x51.grpc.pb.h>
 
 using namespace fmt::literals;
 
-class {{.Metadata.FullName}} : public AsyncCallImpl<{{.Metadata.FullName}}, EventRequestParams, Result> {
+{{$className := .Metadata.FullName}}
+
+class {{$className}} : public AsyncCallImpl<{{$className}}, EventRequestParams, Result> {
 public:
-	using AsyncCallImpl<{{.Metadata.FullName}}, EventRequestParams, Result>::AsyncCallImpl;
+	{{$className}}(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 protected:
-	RequestMethod getRequestMethod() override {
-		return &::Broker::AsyncService::Request{{.Metadata.FullName}};
+	AsyncRequestMethod getRequestMethod() const override {
+		return &::Broker::AsyncService::Request{{$className}};
 	}
 
 	void doReply() override {
-		auto cid = m_request.connectionid();
+		auto cid = request().connectionid();
 		std::string acc = cid.account();
 		std::string srv = cid.service();
 		int idx = cid.index();
 
-		auto robot = m_robotManager->findRobot(acc);
+		auto robot = m_robotManager.findRobot(acc);
 		if (!robot) {
-			auto e = m_reply.mutable_error();
+			auto e = reply().mutable_error();
 			e->set_errorcode((int)whitebox::errc::CANNOT_FIND_ROBOT);
 			e->set_errorcategory(whitebox::ERROR_CATEGORY);
 			e->set_message("cannot find robot: acc={}"_format(acc));
 		} else {
 			auto conn = robot->findConnection(srv, idx);
 			if (!conn) {
-				auto e = m_reply.mutable_error();
+				auto e = reply().mutable_error();
 				e->set_errorcode((int)whitebox::errc::CANNOT_FIND_CONNECTION);
 				e->set_errorcategory(whitebox::ERROR_CATEGORY);
 				e->set_message("cannot find connection: acc={}, srv={}, idx={}"_format(acc, srv, idx));
 			} else {
 				{{.Spec.SendSpec.Event.Spec.EventName}} ev;
-				init{{.Spec.SendSpec.Event.Metadata.FullName}}(ev, m_request, *robot);
+				try {
+					init{{.Spec.SendSpec.Event.Metadata.FullName}}(ev, request(), *robot);
+				} catch (const boost::bad_lexical_cast& ex) {
+					auto e = reply().mutable_error();
+					e->set_errorcode((int)whitebox::errc::BAD_CAST);
+					e->set_errorcategory(whitebox::ERROR_CATEGORY);
+					if (const std::string* info = boost::get_error_info<whitebox::errmsg>(ex)) {
+						e->set_message(*info);
+					}
+					finish();
+					return;
+				}
 				conn->sendEvent(&ev);
 
 				conn->waitEvent([](IEvent* ev) {
@@ -75,28 +90,34 @@ protected:
 				}, [this](int matchedEventIndex, IEvent* ev) {
 					{{range $i, $e := .Spec.RecvSpec.Events}}
 					if (matchedEventIndex == {{$i}}) {
-						fillReplyBy{{ $e.Metadata.FullName }}(*({{$e.Spec.EventName}}*)ev, m_reply);
-						m_responder.Finish(m_reply, grpc::Status::OK, this);
+						fillReplyBy{{ $e.Metadata.FullName }}(*({{$e.Spec.EventName}}*)ev, reply());
+						finish();
 						return;
 					}
 					{{end}}
 
-					auto e = m_reply.mutable_error();
+					auto e = reply().mutable_error();
 					e->set_errorcode((int)whitebox::errc::TIMEOUT);
 					e->set_errorcategory(whitebox::ERROR_CATEGORY);
 					e->set_message("action %s timeout"_format("{{.Metadata.FullName}}"));
-					m_responder.Finish(m_reply, grpc::Status::OK, this);
+					finish();
 				});
 
 				return;
 			}
 		}
-		m_responder.Finish(m_reply, grpc::Status::OK, this);
+		finish();
 	}
+
+	AsyncCall* createNewInstance() override {
+		return create{{$className}}(server(), m_robotManager);
+	}
+private:
+	RobotManager& m_robotManager;
 };
 
-void process{{ .Metadata.FullName }}(AsyncCallFactory& fac) {
-	fac.create<{{ .Metadata.FullName }}>()->proceed();
+AsyncCall* create{{$className}}(Server& svr, RobotManager& rm) {
+	return new {{ $className }}{svr, rm};
 }
 	
 	`

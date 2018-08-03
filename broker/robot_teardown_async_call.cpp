@@ -1,16 +1,39 @@
 #include "robot_teardown_async_call.h"
+#include "async_call_impl.h"
 #include "robot_manager.h"
+#include <boost/log/trivial.hpp>
 
-RequestMethod RobotTeardownAsyncCall::getRequestMethod() {
-    // m_srv->RequestRobotTeardown(&m_ctx, &m_request, &m_responder, m_cq, m_cq, this);
-    return &::Broker::AsyncService::RequestRobotTeardown;
-}
+class RobotTeardownAsyncCall final : public AsyncCallImpl<RobotTeardownAsyncCall, TeardownParams, Error> {
+public:
+    RobotTeardownAsyncCall(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 
-void RobotTeardownAsyncCall::doReply() {
-    // 删除一个robot
-    auto acc = m_request.account();
+    AsyncRequestMethod getRequestMethod() const override {
+        return &::Broker::AsyncService::RequestRobotTeardown;
+    }
 
-    m_robotManager->teardownRobot(acc);
+    void doReply() override {
+        // 删除一个robot
+        auto acc = request().account();
 
-    m_responder.Finish(m_reply, grpc::Status::OK, this);
+        BOOST_LOG_TRIVIAL(info) << "teardown a robot: account=" << acc;
+        
+        m_robotManager.teardownRobot(acc);
+
+        // m_responder.Finish(m_reply, grpc::Status::OK, this);
+        finish();
+    }
+
+    AsyncCall* createNewInstance() override {
+        return createRobotTeardownAsyncCall(server(), m_robotManager);
+    }
+private:
+    RobotManager& m_robotManager;
+};
+
+
+
+
+
+AsyncCall* createRobotTeardownAsyncCall(Server& svr, RobotManager& rm) {
+    return new RobotTeardownAsyncCall{svr, rm};
 }

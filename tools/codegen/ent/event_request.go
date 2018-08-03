@@ -2,6 +2,7 @@ package ent
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/golang/glog"
 )
@@ -13,6 +14,7 @@ const (
 #include <{{ . }}>
 {{ end }}
 #include <common.pb.h>
+#include <boost/lexical_cast.hpp>
 
 class Robot;
 
@@ -21,12 +23,23 @@ void init{{ .Metadata.FullName }}({{ .Spec.EventName }}& ev, const EventRequestP
 
 	EVENT_REQUEST_CPP_TEMPLATE = `
 #include "{{.HeaderFileName}}"
-#include <boost/lexical_cast.hpp>
 #include "../robot.h"
+#include "../errors.h"
+#include <boost/exception/all.hpp>
+#include <fmt/format.h>
+
+using namespace fmt::literals;
 
 void init{{ .Metadata.FullName }}({{ .Spec.EventName }}& ev, const EventRequestParams& request, const Robot& robot) {
 	{{ range .Spec.Params }}
-	ev.{{ .Field }} = {{ .Value }};
+	{
+		auto raw = {{.RawValue}};
+		try {
+			ev.{{.Field}} = {{.CastFunc}}(raw);
+		} catch (const boost::bad_lexical_cast& ex) {
+			throw boost::enable_error_info(ex) << whitebox::errmsg("value: \"{}\", dstType: {}, raw: {}"_format(raw, {{.ValueType | quote}}, {{.RawValue | quote}}));
+		}
+	}
 	{{ end }}
 }
 	`
@@ -38,12 +51,14 @@ type EventRequest struct {
 	Spec     struct {
 		EventName string `yaml:"eventName"`
 		Params    []struct {
-			Field    string `yaml:"field"`
-			Constant string `yaml:"constant"`
-			// Expression string `yaml:"expression"` // 表示一个c++表达式，原封不动的放到生成的代码里
+			Field          string `yaml:"field"`
+			Constant       string `yaml:"constant"`
+			Expression     string `yaml:"expression"`     // 表示一个c++表达式，原封不动的放到生成的代码里
 			FromPlayerData string `yaml:"fromPlayerData"` // 表示从玩家数据里取
 			ValueType      string `yaml:"type"`
-			Value          string
+			// Value          string
+			RawValue string // cast之前的值
+			CastFunc string
 		} `yaml:"params"`
 	} `yaml:"spec"`
 
@@ -79,33 +94,30 @@ func (e *EventRequest) OutputFileNames() []string {
 // 把一个字面量转成目标对象的c++代码表示。repr是yml里面用户写的内容，比如字符串的话是不带引号的
 func constantToValue(vt string, repr string) string {
 	switch vt {
-	case "Int32":
+	case "Int":
+		return repr
+	case "LongLong":
 		return repr
 	case "Symbol":
 		return repr
 	case "String":
-		return fmt.Sprintf(`"%s"`, repr)
-	case "Expression":
-		// 用一个表达式。注意用个括号
-		return fmt.Sprintf(`(%s)`, repr)
+		return strconv.Quote(repr)
 	default:
 		glog.Fatalf("no such type %s", vt)
+		return ""
 	}
-
-	return ""
 }
 
 // 把字符串的值转成目标类型的c++代码。这里repr是一个表达式，表达式的值是string
-func stringToValue(vt string, repr string) string {
+func castFuncByTargetType(vt string) string {
 	switch vt {
-	case "Int32":
-		return fmt.Sprintf(`boost::lexical_cast<int>(%s)`, repr)
+	case "Int":
+		return `boost::lexical_cast<int>`
+	case "LongLong":
+		return "boost::lexical_cast<long long>"
 	default:
-		glog.Fatalf("cannot convert type: %s\n", vt)
-
+		return ""
 	}
-
-	return ""
 }
 
 func (e *EventRequest) OnParsed() error {
@@ -122,39 +134,24 @@ func (e *EventRequest) OnParsed() error {
 
 		consantValue := s.Params[i].Constant
 		if len(consantValue) > 0 {
-			param.Value = constantToValue(vt, consantValue)
-			// // 用常量来赋值
-			// switch vt {
-			// case "Int32":
-			// 	s.Params[i].Value = consantValue
-			// 	break
-			// case "Symbol":
-			// 	s.Params[i].Value = consantValue
-			// 	break
-			// case "String":
-			// 	s.Params[i].Value = fmt.Sprintf(`"%s"`, consantValue)
-			// 	break
-			// case "Expression":
-			// 	// 用一个表达式。注意用个括号
-			// 	param.Value = fmt.Sprintf(`(%s)`, param.Constant)
-			// 	break
-			// default:
-			// 	return fmt.Errorf("no such type %s", vt)
-			// }
-
+			param.RawValue = constantToValue(vt, consantValue)
+			// param.ValueBeforeCast = param.Value
 			continue
 		}
 
-		// if len(param.Expression) > 0 {
-		// 	// 用一个表达式。注意用个括号
-		// 	param.Value = fmt.Sprintf(`(%s)`, param.Expression)
-		// 	continue
-		// }
+		if len(param.Expression) > 0 {
+			// 用一个表达式。注意用个括号
+			param.RawValue = fmt.Sprintf(`(%s)`, param.Expression)
+			param.CastFunc = castFuncByTargetType(vt)
+			continue
+		}
 
 		if len(param.FromPlayerData) > 0 {
 			// get value from player data
+			// 这个repr的结果肯定是个string
 			repr := fmt.Sprintf(`robot.getProperty("%s")`, param.FromPlayerData)
-			param.Value = stringToValue(vt, repr)
+			param.RawValue = repr
+			param.CastFunc = castFuncByTargetType(vt)
 			continue
 		}
 	}

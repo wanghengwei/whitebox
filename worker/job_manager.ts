@@ -11,8 +11,7 @@ class Job {
     stopNotifier: Subject<any>;
 
     constructor(def: JobDef) {
-        this.robot = new Robot(def.account);
-        this.robot.setProperties(def.playerProperties);
+        this.robot = new Robot(def.account, def.playerData);
         this.testCase = testCaseManager.findTestCase(def.testCaseRef);
         this.stopNotifier = new Subject();
     }

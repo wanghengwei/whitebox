@@ -34,6 +34,7 @@ add_executable(broker
     errors.cpp
     connector_impl.cpp
     connector_manager.cpp
+    server.cpp
     robot_manager.cpp
     connect_async_call.cpp
     robot_setup_async_call.cpp
