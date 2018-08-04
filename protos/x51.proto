@@ -1,20 +1,22 @@
 
 syntax = "proto3";
 
+option java_package = "com.tac.whitebox";
+
 import "google/protobuf/empty.proto";
 
 import "common.proto";
 
 service Broker {
 
-	rpc RobotSetup (InitParams) returns (Error);
+	rpc RobotSetup (InitParams) returns (Error) {}
 
-	rpc RobotTeardown (TeardownParams) returns (Error);
+	rpc RobotTeardown (TeardownParams) returns (Error) {}
     
-    rpc Connect (ConnectParams) returns (Result);
+    rpc Connect (ConnectParams) returns (Result) {}
 
     
-    rpc ActionSendRecvEventCEventVideoInitConnectionRequest (EventRequestParams) returns (Result);
+    rpc ActionSendRecvEventCEventVideoInitConnectionRequest (EventRequestParams) returns (Result) {}
     
 }
 

@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 // package x51;
+option java_package = "com.tac.whitebox";
 
 message ConnectParams {
     string address = 1;

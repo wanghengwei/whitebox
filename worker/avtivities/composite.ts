@@ -58,7 +58,8 @@ export class CompositeActivity implements Activity {
             catchError((err, caught) => {
                 // logger.info({catch: err}, `catched an error. isRoot=${this.isRoot}`);
                 // 如果错误是restart，那就一直抛给root节点处理
-                if (err instanceof RestartError && this.isRoot) {
+                // edit. 不再在这里处理了，直接当作错误，把job扔回manager去
+                if (false && err instanceof RestartError && this.isRoot) {
                     logger.info("restart...");
                     // 延迟一段时间再restart。最好是可配
                     return concat(of(err.lastResult), timer(5000).pipe(ignoreElements()), caught);

@@ -1,2 +1,19 @@
 import pino from 'pino';
-export default pino({ prettyPrint: true });
+
+if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'development';
+}
+
+let loggerParam: any = null;
+
+if (process.env.NODE_ENV == 'production') {
+    loggerParam = {
+        prettyPrint: false,
+    };
+} else {
+    loggerParam = {
+        prettyPrint: true,
+    };
+}
+
+export default pino(loggerParam);

@@ -29,7 +29,7 @@ export class Job {
     }
 
     public run() {
-
+        logger.info("prepared to run job");
         // setup 成功后，
         // 等testcase到位了才开始执行
         // 如果setup 失败了，testcase也没必要等了，直接作为错误
