@@ -16,6 +16,7 @@ const (
 	ORDER_RESPONSE = "Response"
 
 	ORDER_SENDRECVEVENT = "SendRecvEvent"
+	ORDER_SENDEVENT     = "SendEvent"
 
 	AUTOGEN_CPP_FOLDER = "broker/autogen/"
 	PROTOS_FOLDER      = "protos/"
@@ -215,8 +216,10 @@ func (em *entityManagerImpl) generateInitCpp() error {
 
 func newActionItem(order string) Entity {
 	switch order {
-	case "SendRecvEvent":
-		return &ActionSendRecvEvent{}
+	case ORDER_SENDRECVEVENT:
+		return NewActionSendRecvEvent()
+	case ORDER_SENDEVENT:
+		return NewActionSendEvent()
 	default:
 		log.Fatalf("no order %s\n", order)
 		return nil

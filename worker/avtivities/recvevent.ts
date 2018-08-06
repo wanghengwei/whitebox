@@ -7,7 +7,7 @@ import { Result } from "../activity";
 class RecvEventMetadata {
     type: string = 'recv';
 
-    constructor(public event: string, public args: any) { }
+    constructor(public name: string, public args: any) { }
 }
 
 

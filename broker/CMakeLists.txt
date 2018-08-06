@@ -46,5 +46,5 @@ add_executable(broker
 )
 target_link_libraries(broker autogen grpc++_unsecure protobuf fruit dl pthread ${Boost_LIBRARIES} fmt)
 target_compile_options(broker PRIVATE -Wno-format -include limits.h)
-target_compile_definitions(broker PRIVATE BOOST_ALL_DYN_LINK)
+# target_compile_definitions(broker PRIVATE BOOST_ALL_DYN_LINK)
 target_include_directories(broker PRIVATE ${MGC_INCLUDE_DIRS})

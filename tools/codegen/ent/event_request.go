@@ -27,13 +27,17 @@ void init{{ .Metadata.FullName }}({{ .Spec.EventName }}& ev, const EventRequestP
 #include "../errors.h"
 #include <boost/exception/all.hpp>
 #include <fmt/format.h>
+#include <boost/log/trivial.hpp>
 
 using namespace fmt::literals;
 
-void init{{ .Metadata.FullName }}({{ .Spec.EventName }}& ev, const EventRequestParams& request, const Robot& robot) {
+{{ $eventName := .Spec.EventName }}
+
+void init{{ .Metadata.FullName }}({{ $eventName }}& ev, const EventRequestParams& request, const Robot& robot) {
 	{{ range .Spec.Params }}
 	{
 		auto raw = {{.RawValue}};
+		BOOST_LOG_TRIVIAL(info) << "set {{ $eventName }}.{{.Field}} = " << raw;
 		try {
 			ev.{{.Field}} = {{.CastFunc}}(raw);
 		} catch (const boost::bad_lexical_cast& ex) {

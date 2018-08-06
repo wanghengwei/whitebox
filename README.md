@@ -1,7 +1,10 @@
 # TODOs
 CEventEncryptEvList 一个机器人收到这个event后，应该对这里面的event 调用CClientBase的一个方法。问题在于，现在很多robot共用一个CClientBase，这样每个robot都调一次行么？看起来行，先简单实现
 
-进入房间后的心跳怎么处理。
+进入房间后的心跳怎么处理？？
+有一种办法：
+引入一个event机制，让action result能有机会引起一个event
+或者用声明式，通过状态来决定是否运行心跳
 
 
 怎么设置参数？

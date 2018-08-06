@@ -16,6 +16,7 @@ add_library(autogen
 		PUBLIC
 			-Wno-deprecated-declarations
 	)
+	target_compile_definitions(autogen PUBLIC BOOST_ALL_DYN_LINK)
 	
 `
 

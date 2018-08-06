@@ -33,6 +33,11 @@ AsyncCall* create{{.Metadata.FullName}}(Server&, RobotManager&);
 #include <fmt/format.h>
 #include <x51.grpc.pb.h>
 
+{{ if .Spec.SendSpec.RoomProxyWrap }}
+#include <include/video_client_interface.h>
+#include <video_platform_impl/common/event/room_proxy_wrap_events.h>
+{{ end }}
+
 using namespace fmt::literals;
 
 {{$className := .Metadata.FullName}}
@@ -78,7 +83,22 @@ protected:
 					finish();
 					return;
 				}
-				conn->sendEvent(&ev);
+
+				{{ if .Spec.SendSpec.RoomProxyWrap }}
+					static int roomProxyWrappedEventSerialId = 0;
+					static const int CLIENT_VERSION = 
+						VIDEO_CLIENT_VERSION_MAJAR << 24 |
+						VIDEO_CLIENT_VERSION_MINOR << 16 |
+						VIDEO_CLIENT_VERSION_REVISION << 8 |
+						VIDEO_CLIENT_VERSION_BUILD;
+					CEventRoomProxyWrapEvent wrap_evt;
+					wrap_evt.AttachEvent(&ev);
+					wrap_evt.serialID = ++roomProxyWrappedEventSerialId;
+					wrap_evt.client_version = CLIENT_VERSION;
+					conn->sendEvent(&wrap_evt);
+				{{ else }}
+					conn->sendEvent(&ev);
+				{{ end }}
 
 				conn->waitEvent([](IEvent* ev) {
 					{{ range $i, $e := .Spec.RecvSpec.Events }}
@@ -127,8 +147,9 @@ type ActionSendRecvEvent struct {
 	Metadata Metadata `yaml:"metadata"`
 	Spec     struct {
 		SendSpec struct {
-			EventRef string `yaml:"eventRef"`
-			Event    *EventRequest
+			EventRef      string `yaml:"eventRef"`
+			Event         *EventRequest
+			RoomProxyWrap bool `yaml:"roomProxyWrap"` // 发送消息是否wrap。mgc会用到。默认应该不wrap
 			// EventName string
 		} `yaml:"send"`
 		RecvSpec struct {
@@ -139,6 +160,13 @@ type ActionSendRecvEvent struct {
 	} `yaml:"spec"`
 
 	HeaderCpp
+}
+
+func NewActionSendRecvEvent() *ActionSendRecvEvent {
+	r := &ActionSendRecvEvent{}
+	r.Spec.SendSpec.RoomProxyWrap = false
+
+	return r
 }
 
 func (e *ActionSendRecvEvent) Class() string {

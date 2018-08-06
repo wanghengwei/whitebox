@@ -7,6 +7,34 @@ spec:
   recv:
     eventRefs:
     - CEventVideoInitConnectionResponse
+---
+
+class: Action
+order: SendRecvEvent
+spec:
+  send:
+    eventRef: CEventVideoRoomEnterRoom
+  recv:
+    eventRefs:
+    - CEventVideoRoomEnterRoomRes
+
+---
+class: Action
+order: SendRecvEvent
+spec:
+  send:
+    eventRef: CEventVideoSendGift
+  recv:
+    eventRefs:
+    - CEventVideoSendGiftResult
+
+---
+class: Action
+order: SendEvent
+metadata:
+  description: "发心跳"
+spec:
+  eventRef: CEventVideoPlayerHeartBeatNotify
 
 ---
 class: Event
@@ -18,7 +46,7 @@ spec:
   eventName: CEventVideoInitConnectionRequest
   params:
   - field: roomID
-    constant: "191"
+    fromPlayerData: "ROOM_ID"
     type: Int
   - field: uid.account
     expression: "robot.account()"
@@ -64,11 +92,19 @@ spec:
   - field: m_source
     constant: "ERS_Normal"
     type: Symbol
+  - field: m_gender
+    constant: "0"
+    type: Int
+  - field: m_level
+    constant: "0"
+    type: Int
 
 ---
 class: Event
 order: Response
 metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
 spec:
   eventName: CEventVideoRoomEnterRoomRes
   errorCodeField: m_result
@@ -76,7 +112,43 @@ spec:
   results:
   - field: m_info.live_detail.anchor_pstid.id
     key: ANCHOR_QQ
-  - field: vip_level
+  - field: m_info.vip_level
     key: VIP_LEVEL
-  - field: vip_expire
+  - field: m_info.vip_expire
     key: VIP_EXPIRE
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/event_video_send_gift.h
+spec:
+  eventName: CEventVideoSendGift
+  params:
+  - field: m_gift_count
+    constant: "1"
+    type: Int
+  - field: m_gift_id
+    constant: "1"
+    type: Int
+---
+class: Event
+order: Response
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/event_video_send_gift.h
+spec:
+  eventName: CEventVideoSendGiftResult
+  errorCodeField: m_result
+  errorCategory: SendVideoGiftResult
+
+---
+class: Event
+order: Request
+metadata:
+  description: "心跳"
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventVideoPlayerHeartBeatNotify

@@ -17,6 +17,7 @@ export abstract class SimpleActivity implements Activity {
     parse(data: any): void {
       this.parsePostprocessor(data.postprocessor);
       this.onErrorHandler = data['@_on_error'] || this.onErrorHandler;
+      this.delayTime = data['@_delay'] * 1000 || this.delayTime;
       this.doParse(data);
     }
   

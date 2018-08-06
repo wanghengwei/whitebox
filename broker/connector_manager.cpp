@@ -31,10 +31,12 @@ private:
 
         params.isTrusted = false;
         params.skipHandshake = false;
+        params.shouldWrap = true;
         m_connectors["User"] = std::make_shared<ConnectorImpl>(m_es, params, "User", m_robotManager);
 
         params.isTrusted = true;
         params.skipHandshake = true;
+        params.shouldWrap = false;
         m_connectors["Video"] = std::make_shared<ConnectorImpl>(m_es, params, "Video", m_robotManager);
     }
 private:

@@ -16,6 +16,7 @@ protected:
     bool DispatchEvent(IEventLink * link, IEvent * event) override;
 private:
     std::string m_serviceName;
+    ConnectorParameters m_params;
     std::map<intptr_t, std::pair<ConnectCallback, int>>  m_cbs;
 
     // components

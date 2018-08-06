@@ -15,7 +15,7 @@ ConnectorImpl::ConnectorImpl(IEventSelector *selector, const ConnectorParameters
         false, 
         PT_POLLING, 
         IO_MAX_CONNECTION
-    ), m_serviceName{srv}, m_robotManager{robotManager} {
+    ), m_serviceName{srv}, m_robotManager{robotManager}, m_params{params} {
         CClientBase::SetEventDispatcher(this);
 
         INetInterface::net_config_t cfg = GetNetInterface()->GetConfig();
@@ -74,7 +74,7 @@ void ConnectorImpl::OnNewLink(IEventLink *newlink) {
     
     // 将conn保存起来留作后面使用
     // 保存在哪？应该在某个机器人的某个服务类别下
-    std::shared_ptr<Connection> pconn{new ConnectionImpl{newlink}};
+    std::shared_ptr<Connection> pconn{new ConnectionImpl{newlink, m_params.shouldWrap}};
     m_robotManager.saveConnection(acc, m_serviceName, cb.second, pconn);
 
     newlink->SetPtr(pconn.get());
@@ -85,11 +85,19 @@ void ConnectorImpl::OnNewLink(IEventLink *newlink) {
 
 void ConnectorImpl::OnConnClose(IEventLink *link) {
     BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::OnConnClose: link=" << link << ", conn=" << link->GetConnection();
+
+    // 服务器主动关闭了一个连接。怎么办？
+    // 从机器人里面删除对应的？
+
+    Connection* pcon = static_cast<Connection*>(link->GetPtr());
+    // 咋办？
+    // 一种方案是，标记这个conn被关闭了，下次有人用的时候（比如机器人找连接）自然报错
+    pcon->setClosed();
 }
 
 bool ConnectorImpl::DispatchEvent(IEventLink * link, IEvent * event) {
     // 处理收到的event
-    BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::DispatchEvent: link=" << link << ", event=" << event->GetRealName();
+    BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::DispatchEvent: link=" << link << ", read_event=" << event->GetRealName() << ", event_name=" << event->GetEventName() << ", clsid=" << event->GetCLSID();
 
     auto conn = static_cast<ConnectionImpl*>(link->GetPtr());
     BOOST_ASSERT(conn);

@@ -1,6 +1,7 @@
 #include "robot.h"
 #include <map>
 #include <boost/assert.hpp>
+#include "connection.h"
 
 class RobotImpl final : public Robot {
 public:
@@ -21,6 +22,12 @@ public:
 
         auto it2 = it->second.find(connectionIndex);
         if (it2 == it->second.end()) {
+            return nullptr;
+        }
+
+        // 检查连接是不是被关闭了
+        if (it2->second->isClosed()) {
+            it->second.erase(it2);
             return nullptr;
         }
 
@@ -53,6 +60,7 @@ public:
 private:
     std::string m_acc;
 
+    // 每个机器人按 (service, index) 的方式保存连接
     std::map<std::string, std::map<int, std::shared_ptr<Connection>>> m_conns;
 
     std::map<std::string, std::string> m_props;

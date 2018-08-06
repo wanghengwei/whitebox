@@ -8,7 +8,7 @@ import { Result } from "../activity";
 class SendEventMetadata {
     type: string = 'send';
 
-    constructor(public event: string, public args: any) { }
+    constructor(public name: string, public args: any) { }
 }
 
 export class SendActionActivity extends SimpleActivity {

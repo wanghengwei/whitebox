@@ -2,13 +2,13 @@ import { Observable } from "rxjs";
 
 export interface Metadata {
   type: string;
+  name: string;
 }
 
 
 // 动作的返回值。
 // 有些动作没有返回，比如sleep
-// 对于send这些动作，返回值是一个枚举
-// 业务act如果失败了，是作为一个item，到js这边处理。换句话说，Result必须要能反映是否失败，如果失败，必须有失败信息；如果成功，需要有数据。
+// 业务act Result必须要能反映是否失败，如果失败，必须有失败信息；如果成功，需要有数据?。
 export class Result {
   // 动作基本信息
   // metadata: Metadata;

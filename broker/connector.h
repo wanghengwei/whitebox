@@ -9,6 +9,7 @@ class Connection;
 struct ConnectorParameters {
     bool isTrusted{true};
     bool skipHandshake{true};
+    bool shouldWrap{false}; // 是否要wrap消息。mgc专用的
 };
 
 using ConnectCallback = std::function<void(std::shared_ptr<Connection>, const std::error_code&, const std::string&)>;

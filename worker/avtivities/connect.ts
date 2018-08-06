@@ -8,6 +8,8 @@ import { SimpleActivity } from "./simple";
 
 class ConnectMetadata implements Metadata {
     type: string = "connect";
+
+    name: string = "connect";
   
     constructor(public args: any) {
   
