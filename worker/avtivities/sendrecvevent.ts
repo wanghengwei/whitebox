@@ -1,21 +1,19 @@
-import { Result } from "../activity";
-import { Observable, bindNodeCallback } from "rxjs";
-import logger from "../logger";
-import broker from "../broker";
+import { bindNodeCallback, Observable } from "rxjs";
 import { map } from "rxjs/operators";
+import { ActionResult } from "../activity";
+import broker from "../broker";
+import logger from "../logger";
 import { SimpleActivity } from "./simple";
 
 
-class SendRecvEventMetadata {
-    type: string = "SendRecvEvent";
+// class SendRecvEventMetadata {
+//     type: string = "SendRecvEvent";
 
-    constructor(public args: any, public name: string) { }
-}
+//     constructor(public args: any, public name: string) { }
+// }
 
 export class SendRecvEventActivity extends SimpleActivity {
     name: string = "";
-    // sendEvent: string = "";
-    // recvEvent: string = "";
     service: string = "";
     connectionIndex: number = 0;
 
@@ -41,7 +39,7 @@ export class SendRecvEventActivity extends SimpleActivity {
         };
         return bindNodeCallback(f)(args).pipe(
             // 这里的x是grpc返回的结果，类型是Result(proto里的)
-            map((x: any) => new Result(new SendRecvEventMetadata(args, this.name), x.error)),
+            map((x: any) => new ActionResult(x, { name: this.name }, args)),
         );
     }
 

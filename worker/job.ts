@@ -6,6 +6,7 @@ import testCaseManager from './testcase_manager';
 import { flatMap, ignoreElements, single } from "rxjs/operators";
 import broker, {proto} from './broker';
 import logger from "./logger";
+import { ActionResult } from "./activity";
 
 // 一个Job表示用例+robot，包含运行时数据。
 export class Job {
@@ -28,7 +29,7 @@ export class Job {
         this.stopNotifier.complete();
     }
 
-    public run() {
+    public run(): Observable<ActionResult> {
         logger.info("prepared to run job");
         // setup 成功后，
         // 等testcase到位了才开始执行

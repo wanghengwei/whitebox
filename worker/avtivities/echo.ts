@@ -1,5 +1,5 @@
 import { SimpleActivity } from "./simple";
-import { Observable, of } from "rxjs";
+import { Observable, of, empty } from "rxjs";
 import { tap } from "rxjs/operators";
 import logger from "../logger";
 
@@ -13,9 +13,9 @@ export class EchoActivity extends SimpleActivity {
     }
 
     doProceed(ctx: any): Observable<any> {
-        return of(this.message).pipe(
-            tap(t => {
-                logger.info(t);
+        return empty().pipe(
+            tap(undefined, undefined, () => {
+                logger.info(this.message);
             })
         );
     }

@@ -1,6 +1,6 @@
 import { from, Observable, concat, of, timer } from "rxjs";
 import { map, concatAll, catchError, ignoreElements } from "rxjs/operators";
-import { Activity } from "../activity";
+import { Activity, ActionResult } from "../activity";
 import { RestartError, ContinueError } from "../errors";
 import logger from "../logger";
 
@@ -39,7 +39,7 @@ export class CompositeActivity implements Activity {
         // logger.info({ actions: this.activities }, "parse done")
     }
 
-    proceed(ctx: any): Observable<any> {
+    proceed(ctx: any): Observable<ActionResult> {
         // 如果某个act的postprocessor是continue且条件满足，那么就应当终止队列，然后：
         // 根据tag找到要重新执行的loop或composite
         // 只有能产生一个结果的act才能有这种postprocessor。sleep、echo、loop这些都不行。
@@ -98,7 +98,7 @@ function createActivityByType(t: string): Activity {
         act = new SelectActivity();
     } else if (t == 'connect') {
         act = new ConnectActionActivity();
-    } else if (t == 'send') {
+    } else if (t == 'SendEvent') {
         act = new SendActionActivity();
     } else if (t == 'recv') {
         act = new RecvActionActivity();

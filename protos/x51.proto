@@ -18,6 +18,8 @@ service Broker {
     
     rpc ActionSendRecvEventCEventVideoRoomEnterRoom (EventRequestParams) returns (Result);
     
+    rpc ActionSendEventCEventVideoRoomLeaveRoom (EventRequestParams) returns (Result);
+    
     rpc ActionSendRecvEventCEventVideoSendGift (EventRequestParams) returns (Result);
     
     rpc ActionSendEventCEventVideoPlayerHeartBeatNotify (EventRequestParams) returns (Result);

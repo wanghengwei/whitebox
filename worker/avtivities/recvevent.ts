@@ -2,13 +2,13 @@ import { SimpleActivity } from "./simple";
 import { Observable, bindNodeCallback } from "rxjs";
 import broker from "../broker";
 import { map } from "rxjs/operators";
-import { Result } from "../activity";
+import { ActionResult } from "../activity";
 
-class RecvEventMetadata {
-    type: string = 'recv';
+// class RecvEventMetadata {
+//     type: string = 'recv';
 
-    constructor(public name: string, public args: any) { }
-}
+//     constructor(public name: string, public args: any) { }
+// }
 
 
 export class RecvActionActivity extends SimpleActivity {
@@ -24,7 +24,7 @@ export class RecvActionActivity extends SimpleActivity {
             index: this.connectionIndex,
         };
         return bindNodeCallback(f)(args).pipe(
-            map((x: any) => new Result(new RecvEventMetadata(this.event, args), x.error)),
+            map((x: any) => new ActionResult(x, { name: this.event }, args)),
         );
     }
 

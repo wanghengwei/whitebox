@@ -11,12 +11,22 @@ spec:
 
 class: Action
 order: SendRecvEvent
+metadata:
+  description: "进入房间"
 spec:
   send:
     eventRef: CEventVideoRoomEnterRoom
   recv:
     eventRefs:
     - CEventVideoRoomEnterRoomRes
+
+---
+class: Action
+order: SendEvent
+metadata:
+  description: "退出房间"
+spec:
+  eventRef: CEventVideoRoomLeaveRoom
 
 ---
 class: Action
@@ -116,6 +126,15 @@ spec:
     key: VIP_LEVEL
   - field: m_info.vip_expire
     key: VIP_EXPIRE
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventVideoRoomLeaveRoom
 
 ---
 class: Event

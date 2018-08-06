@@ -1,5 +1,5 @@
-import { delay, filter, catchError, ignoreElements, map } from "rxjs/operators";
-import { Result, Activity } from "../activity";
+import { delay, filter, catchError, ignoreElements, map, defaultIfEmpty } from "rxjs/operators";
+import { ActionResult, Activity } from "../activity";
 import { Observable, concat, of, timer } from "rxjs";
 import { ContinuePostProcessor, PostProcessor } from "../postprocessors";
 import { RestartError, RetryError } from "../errors";
@@ -21,12 +21,12 @@ export abstract class SimpleActivity implements Activity {
       this.doParse(data);
     }
   
-    proceed(ctx: any): Observable<any> {
+    proceed(ctx: any): Observable<ActionResult> {
       return this.doProceed(ctx).pipe(
         // 执行on_error的handler
         map(r => {
-          // logger.info(`on_error is ${this.onErrorHandler}`);
-          if (r == undefined || !r.error) {
+          // 注意这里依赖于一个约定，就是r的错误用r.error来表示
+          if (!r.error) {
             // 没有错误
             return r;
           }
@@ -44,6 +44,7 @@ export abstract class SimpleActivity implements Activity {
             return r;
           }
         }),
+        // 处理错误，这里错误来源可能是上面的map抛出的，也可能是rpc调用出错
         catchError((err, caught) => {
           if (err instanceof RetryError) {
             // 重新执行当前动作
@@ -55,6 +56,8 @@ export abstract class SimpleActivity implements Activity {
         }),
         // 执行后置处理器
         // 要求所有act都要返回点东西，不能是empty
+        // 加入下面这个opt好让动作总有点东西返回，这样子类就可以用empty了
+        defaultIfEmpty({}),
         map((x, idx) => {
           if (!this.postprocessor) {
             return x;
@@ -65,10 +68,11 @@ export abstract class SimpleActivity implements Activity {
         // 延迟执行
         delay(this.delayTime),
         // 最终只返回Result类型的对象
-        filter(x => x instanceof Result)
+        filter(x => x instanceof ActionResult)
       );
     }
   
+    // 子类可以返回任意的值，不过只有 ActionResult 的会最终被返回。
     abstract doProceed(ctx: any): Observable<any>;
   
     abstract doParse(data: any): void;

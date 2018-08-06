@@ -1,12 +1,11 @@
-import { Job } from "./job";
-import { Subject, interval, zip, Observable } from "rxjs";
-import logger from "./logger";
-import { map } from "rxjs/operators";
-import { RestartError } from "./errors";
 import { EventEmitter } from "events";
-import { Result } from "./activity";
+import { interval, Subject, zip } from "rxjs";
+import { map } from "rxjs/operators";
+import { clearInterval, setInterval } from "timers";
 import broker from "./broker";
-import { setTimeout } from "timers";
+import { RestartError } from "./errors";
+import { Job } from "./job";
+import logger from "./logger";
 
 export interface JobManager {
     // 必须调这个方法来启动
@@ -54,10 +53,10 @@ class JobManagerImpl implements JobManager {
 
     addEventListeners() {
         // 处理心跳
-        this.events.on('roomEntered', (job, metadata) => {
-            job.heartBeatTimer = setTimeout(() => {
-                logger.info({robot: metadata.args.connectionId.account}, "sendHearBeat");
-                broker.ActionSendEventCEventVideoPlayerHeartBeatNotify({connectionId: metadata.args.connectionId}, (err, _) => {
+        this.events.on('roomEntered', (job, action, args) => {
+            job.heartBeatTimer = setInterval(() => {
+                logger.info({ robot: args.connectionId.account }, "sendHearBeat");
+                broker.ActionSendEventCEventVideoPlayerHeartBeatNotify({ connectionId: args.connectionId }, (err, _) => {
                     if (err) {
                         // 如果发送心跳错误，那应该是连接被断开了。停止发心跳
                         clearTimeout(job.heartBeatTimer);
@@ -67,7 +66,7 @@ class JobManagerImpl implements JobManager {
         });
 
         this.events.on('roomLeaved', (job) => {
-            clearTimeout(job.heartBeatTimer);
+            clearInterval(job.heartBeatTimer);
         });
     }
 
@@ -76,11 +75,9 @@ class JobManagerImpl implements JobManager {
             // job执行的结果在这里就处理掉了
             logger.info({ result }, "action done");
             // 有些result会触发一些event
-            if (result instanceof Result) {
-                if (result.metadata.name == 'CEventVideoRoomEnterRoom' && result.ok()) {
-                    logger.info("trigger event roomEntered");
-                    this.events.emit('roomEntered', job, result.metadata);
-                }
+            if (result.action.name == 'CEventVideoRoomEnterRoom' && result.ok()) {
+                logger.info("trigger event roomEntered");
+                this.events.emit('roomEntered', job, result.action, result.args);
             }
         }, err => {
             // 这里是否所有的错误都是无法恢复的？
