@@ -4,7 +4,7 @@ import { TestCase } from "./testcase";
 import { JobDef } from "./job_def";
 import testCaseManager from './testcase_manager';
 import { flatMap, ignoreElements, single } from "rxjs/operators";
-import broker, {proto} from './broker';
+import broker, { proto } from './broker';
 import logger from "./logger";
 import { ActionResult } from "./activity";
 
@@ -30,15 +30,15 @@ export class Job {
     }
 
     public run(): Observable<ActionResult> {
-        logger.info("prepared to run job");
+        logger.debug("prepared to run job");
         // setup 成功后，
         // 等testcase到位了才开始执行
         // 如果setup 失败了，testcase也没必要等了，直接作为错误
         return concat(this.setupRobot(), this.testCase).pipe(
             // 必须唯一
             single(),
-            flatMap(tc => { 
-                logger.info({robot: this.robot, testcase: this.testCaseRef}, "runJob");
+            flatMap(tc => {
+                logger.debug({ robot: this.robot, testcase: this.testCaseRef }, "runJob");
                 return tc.run(this.robot, this.stopNotifier);
             }),
         );
@@ -48,15 +48,20 @@ export class Job {
     setupRobot(): Observable<any> {
         let f = (args, cb) => {
             try {
-                logger.info({args}, "setupRobot");
+                logger.info({ args }, "setupRobot");
 
                 let cb2 = (err, res) => {
-                    logger.info({rpc_error: err, result: res}, "setupRobot DONE");
+                    if (err) {
+                        logger.fatal({grpc_error: err}, "setupRobot FAILED");
+                    } else {
+                        logger.info({ result: res }, "setupRobot OK");
+                    }
+
                     cb(err, res);
                 };
                 broker.RobotSetup(args, cb2);
             } catch (e) {
-                logger.error({exception: e}, "setupRobot FAILED");
+                logger.fatal({ exception: e }, "setupRobot FAILED");
                 throw e;
             }
         };
@@ -68,9 +73,13 @@ export class Job {
     }
 
     teardownRobot() {
-        logger.info({account: this.robot.account}, `teardownRobot`);
-        broker.RobotTeardown({account: this.robot.account}, (err, res) => {
-            logger.info({grpc_error: err, result: res}, "teardownRobot DONE");
+        logger.info({ account: this.robot.account }, `teardownRobot`);
+        broker.RobotTeardown({ account: this.robot.account }, (err, res) => {
+            if (err) {
+                logger.fatal({grpc_error: err}, "teardownRobot FAILED");
+            } else {
+                logger.info({ result: res }, "teardownRobot OK");
+            }
         });
     }
 }

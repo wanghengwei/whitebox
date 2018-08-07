@@ -19,6 +19,8 @@ public:
     // 未来可能可以考虑用更通用、灵活的方式来处理。不过现在就用个flag来作就行
     explicit ConnectionImpl(IEventLink* link, bool wrap = false) : m_link{link}, m_wrap{wrap} {}
 
+    ~ConnectionImpl();
+
     void sendEvent(IEvent* ev) override;
 
     void waitEvent(std::function<int(IEvent*)> cond, std::function<void(int, IEvent*)> cb) override;

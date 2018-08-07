@@ -3,15 +3,16 @@
 #include <map>
 #include <boost/assert.hpp>
 #include <fruit/fruit.h>
+#include "logging.h"
 
 class RobotManagerImpl final : public RobotManager {
 public:
     INJECT(RobotManagerImpl()) {}
 
-    std::shared_ptr<Robot> findRobot(const std::string& acc) const override {
+    std::weak_ptr<Robot> findRobot(const std::string& acc) const override {
         auto it = m_robots.find(acc);
         if (it == m_robots.end()) {
-            return nullptr;
+            return std::weak_ptr<Robot>{};
         }
 
         return it->second;
@@ -20,8 +21,11 @@ public:
     void setupRobot(const std::string& acc, std::map<std::string, std::string>&& props) override {
         auto it = m_robots.find(acc);
         if (it != m_robots.end()) {
+            BOOST_LOG_TRIVIAL(info) << "setupRobot: robot {} already exists, skip"_format(acc);
             return;
         }
+
+        BOOST_LOG_TRIVIAL(info) << "setupRobot: account={}, sizeOfData={}"_format(acc, props.size());
 
         auto robot = createRobot(acc, std::move(props));
         m_robots.insert(std::make_pair(acc, robot));
@@ -29,10 +33,12 @@ public:
 
     void teardownRobot(const std::string& acc) override {
         auto it = m_robots.find(acc);
-        if (it != m_robots.end()) {
+        if (it == m_robots.end()) {
+            BOOST_LOG_TRIVIAL(info) << "teardownRobot FAILED: account not found: " << acc;
             return;
         }
-
+        
+        BOOST_LOG_TRIVIAL(info) << "teardownRobot: account=" << acc << ", use_count=" << it->second.use_count();
         m_robots.erase(it);
     }
 
@@ -44,12 +50,6 @@ public:
         }
 
         auto& robot = it->second;
-
-        // auto conn = robot->findConnection(serviceName, index);
-        // if (conn) {
-        //     // 错误！
-        //     BOOST_ASSERT_MSG(false, "connection index duplicated");
-        // }
 
         robot->saveConnection(serviceName, index, conn);
     }

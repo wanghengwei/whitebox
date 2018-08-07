@@ -10,6 +10,8 @@
 #include "robot_setup_async_call.h"
 #include "robot_teardown_async_call.h"
 #include <video_platform_impl/share/netengine/BiboFrame/BiboInterfaces.h>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 
 using namespace std::literals::chrono_literals;
 
@@ -27,21 +29,18 @@ public:
 
     int run() {
         // 设置x51的log
-        GetLogInterface()->SetSystemPriority(900);
-
-        // std::string addr{"0.0.0.0:12345"};
-
-        // Broker::AsyncService& broker = &m_asyncService.get();
-        
-        // grpc::ServerBuilder builder;
-        // builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
-        
-        // builder.RegisterService(&broker);
-
-        // // std::unique_ptr<grpc::ServerCompletionQueue> cq = builder.AddCompletionQueue();
-        // m_completionQueueComponent.set(builder.AddCompletionQueue());
-
-        // auto server = builder.BuildAndStart();
+        // static const std::map<std::string, int> x51LevelMap = {
+        //     {"Debug2", 900},
+        //     {"Debug", 800},
+        //     {"Info", 700},
+        //     {"Error", 400},
+        //     {"Critical", 300},
+        //     {"Fatal", 200}
+        // };
+        GetLogInterface()->SetSystemPriority(700);
+        boost::log::core::get()->set_filter(
+            boost::log::trivial::severity >= boost::log::trivial::info
+        );
 
         m_server.start();
 

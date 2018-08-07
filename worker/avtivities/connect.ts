@@ -35,7 +35,7 @@ export class ConnectActionActivity extends SimpleActivity {
     this.addressKey = data['@_address'] || `${this.service}.${this.connectionIndex}.Address`;
     this.portKey = data['@_port'] || `${this.service}.${this.connectionIndex}.Port`;
 
-    logger.info("ConnectActionActivity parsed");
+    logger.debug({action: this}, "ConnectActionActivity parsed");
   }
 
   doProceed(ctx: any): Observable<any> {
@@ -45,7 +45,14 @@ export class ConnectActionActivity extends SimpleActivity {
       // let metadata = new ConnectMetadata(args);
       logger.info({ args }, "Connect");
       broker.Connect(args, (error: any, result: any) => {
-        logger.info({ result, error }, "Connect DONE");
+        if (error) {
+          logger.fatal({ grpc_error: error }, "Connect FAILED");
+        } else if (result.error) {
+          logger.error({ error: result.error }, "Connect FAILED");
+        } else {
+          logger.info({ result }, "Connect OK");
+        }
+
         cb(error, result);
       });
     };

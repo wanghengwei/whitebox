@@ -20,9 +20,20 @@ export class SendRecvEventActivity extends SimpleActivity {
     doProceed(ctx: any): Observable<any> {
         let f = (arg, cb) => {
             // 打印不出来具体的一些参数，比如怎么填event的，这样不大好。以后改掉
-            logger.info({ action_name: this.name, args }, `SendRecvEvent`)
+            logger.info({ action_name: this.name, args }, `SendRecvEvent ${this.name}`)
             let cb2 = (error, result) => {
-                logger.info({ action_name: this.name, args, result, rpc_error: error }, "SendRecvEvent DONE")
+                if (error) {
+                    logger.fatal({ grpc_error: error }, `SendRecvEvent ${this.name} FAILED`);
+                } else if (result.error) {
+                    if (this.onErrorHandler != 'ignore') {
+                        logger.error({ error: result.error }, `SendRecvEvent ${this.name} FAILED`);
+                    } else {
+                        logger.warn({ error: result.error }, `SendRecvEvent ${this.name} FAILED`);
+                    }
+                } else {
+                    logger.info({ action_name: this.name, args, result }, `SendRecvEvent ${this.name} OK`);
+                }
+
                 cb(error, result);
             };
             // 注意这里要拼成完整名字：类型+name  

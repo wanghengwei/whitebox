@@ -13,6 +13,7 @@ if (process.env.NODE_ENV == 'production') {
 } else {
     loggerParam = {
         prettyPrint: true,
+        level: 'debug',
     };
 }
 

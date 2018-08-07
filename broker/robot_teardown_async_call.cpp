@@ -1,7 +1,7 @@
 #include "robot_teardown_async_call.h"
 #include "async_call_impl.h"
 #include "robot_manager.h"
-#include <boost/log/trivial.hpp>
+// #include <boost/log/trivial.hpp>
 
 class RobotTeardownAsyncCall final : public AsyncCallImpl<RobotTeardownAsyncCall, TeardownParams, Error> {
 public:
@@ -15,7 +15,7 @@ public:
         // 删除一个robot
         auto acc = request().account();
 
-        BOOST_LOG_TRIVIAL(info) << "teardown a robot: account=" << acc;
+        // BOOST_LOG_TRIVIAL(info) << "teardown a robot: account=" << acc;
         
         m_robotManager.teardownRobot(acc);
 

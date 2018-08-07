@@ -11,7 +11,7 @@ function main() {
     jobManager.start();
 
     jobReceiver.getJobs().subscribe(jd => {
-        logger.info({ job: jd }, `received a job`);
+        logger.info({ job_template: jd }, `received a job template`);
 
         // 为了控制速率，不再拿到job就立刻创建并启动。需要有一个队列来控制一下。
 

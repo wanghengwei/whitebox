@@ -10,7 +10,7 @@ public:
 
     virtual const std::string& account() const = 0;
 
-    virtual std::shared_ptr<Connection> findConnection(const std::string& serviceName, int connectionIndex) = 0;
+    virtual std::weak_ptr<Connection> findConnection(const std::string& serviceName, int connectionIndex) = 0;
 
     virtual void saveConnection(const std::string& serviceName, int connectionIndex, std::shared_ptr<Connection> conn) = 0;
 

@@ -3,6 +3,7 @@ import { ActionResult, Activity } from "../activity";
 import { Observable, concat, of, timer } from "rxjs";
 import { ContinuePostProcessor, PostProcessor } from "../postprocessors";
 import { RestartError, RetryError } from "../errors";
+import logger from "../logger";
 
 // 表示简单act，只返回最多一个结果的。和loop那种不一样。
 // 子类应该实现doParse & doProceed
@@ -25,9 +26,14 @@ export abstract class SimpleActivity implements Activity {
       return this.doProceed(ctx).pipe(
         // 执行on_error的handler
         map(r => {
-          // 注意这里依赖于一个约定，就是r的错误用r.error来表示
-          if (!r.error) {
+          if (!(r instanceof ActionResult)) {
+            logger.debug("r is not ActionResult, ignore");
+            return r;
+          }
+
+          if (r.ok()) {
             // 没有错误
+            logger.debug("no error, ignore");
             return r;
           }
   
@@ -35,6 +41,7 @@ export abstract class SimpleActivity implements Activity {
             // 如果 on_error="restart" ，那么应当重新执行整个用例。
             // 做法就是抛出个错误，让最顶层去catchError
             // 不过这里有个问题，丢失了一次运行结果
+            logger.debug("restart job");
             throw new RestartError(r);
           } else if (this.onErrorHandler == 'retry') {
             // 重试当前动作

@@ -1,8 +1,8 @@
 #include "connector_impl.h"
-#include <boost/log/trivial.hpp>
 #include "errors.h"
 #include "connection_impl.h"
 #include "robot_manager.h"
+#include "logging.h"
 
 ConnectorImpl::ConnectorImpl(IEventSelector *selector, const ConnectorParameters& params, const std::string& srv, RobotManager& robotManager) : 
     CClientBase(
@@ -26,10 +26,10 @@ ConnectorImpl::ConnectorImpl(IEventSelector *selector, const ConnectorParameters
     }
 
 void ConnectorImpl::connect(const std::string& addr, uint16_t port, const std::string& acc, const std::string& pass, int idx, ConnectCallback&& cb) {
-    BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::connect: addr=" << addr << ", port=" << port << ", acc=" << acc;
+    BOOST_LOG_TRIVIAL(info) << "Connect: srv={}, addr={}, port={}, acc={}, idx={}"_format(m_serviceName, addr, port, acc, idx);
 
     auto c = CClientBase::Connect(addr.c_str(), port, acc.c_str(), pass.c_str());
-    BOOST_LOG_TRIVIAL(info) << "CClientBase::Connect returned conn is " << c;
+    BOOST_LOG_TRIVIAL(debug) << "CClientBase::Connect returned conn is " << c;
 
     auto k = intptr_t(c);
     auto it = m_cbs.find(k);
@@ -44,7 +44,7 @@ void ConnectorImpl::connect(const std::string& addr, uint16_t port, const std::s
 void ConnectorImpl::OnConnFail(INetConnection *conn) {
     const std::string acc{conn->GetAccountName()};
 
-    BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::OnConnFail: acc=" << acc << ", conn=" << conn;
+    BOOST_LOG_TRIVIAL(info) << "Connect FAILED: acc={}, conn={}"_format(acc, intptr_t(conn));
 
     auto it = m_cbs.find(intptr_t(conn));
     if (it == m_cbs.end()) {
@@ -61,7 +61,7 @@ void ConnectorImpl::OnNewLink(IEventLink *newlink) {
     auto rconn = newlink->GetConnection();
     std::string acc = rconn->GetAccountName();
 
-    BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::OnNewLink: newLink=" << newlink << ", conn=" << rconn;
+    BOOST_LOG_TRIVIAL(info) << "Connect OK: newLink={}, conn={}"_format(intptr_t(newlink), intptr_t(rconn));
 
     auto it = m_cbs.find(intptr_t(rconn));
     if (it == m_cbs.end()) {
@@ -84,12 +84,17 @@ void ConnectorImpl::OnNewLink(IEventLink *newlink) {
 }
 
 void ConnectorImpl::OnConnClose(IEventLink *link) {
-    BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::OnConnClose: link=" << link << ", conn=" << link->GetConnection();
+    BOOST_LOG_TRIVIAL(info) << "connection closed: link=" << link << ", conn=" << link->GetConnection();
 
     // 服务器主动关闭了一个连接。怎么办？
     // 从机器人里面删除对应的？
 
-    Connection* pcon = static_cast<Connection*>(link->GetPtr());
+    void* p = link->GetPtr();
+    if (!p) {
+        // 如果是null，那应该是相应的connection对象已经析构了。
+        return;
+    }
+    Connection* pcon = static_cast<Connection*>(p);
     // 咋办？
     // 一种方案是，标记这个conn被关闭了，下次有人用的时候（比如机器人找连接）自然报错
     pcon->setClosed();
@@ -97,10 +102,16 @@ void ConnectorImpl::OnConnClose(IEventLink *link) {
 
 bool ConnectorImpl::DispatchEvent(IEventLink * link, IEvent * event) {
     // 处理收到的event
-    BOOST_LOG_TRIVIAL(info) << "ConnectorImpl::DispatchEvent: link=" << link << ", read_event=" << event->GetRealName() << ", event_name=" << event->GetEventName() << ", clsid=" << event->GetCLSID();
+    BOOST_LOG_TRIVIAL(debug) << "ConnectorImpl::DispatchEvent: link=" << link << ", real_event=" << event->GetRealName() << ", event_name=" << event->GetEventName() << ", clsid=" << event->GetCLSID();
 
     auto conn = static_cast<ConnectionImpl*>(link->GetPtr());
-    BOOST_ASSERT(conn);
+    // 这里如果是null，说明对应的conn析构了
+    // conn析构发生在robot析构中
+    // BOOST_ASSERT(conn);
+    if (!conn) {
+        BOOST_LOG_TRIVIAL(trace) << "dispatch event but conn is null. link={:x}, conn={:x}"_format(intptr_t(link), intptr_t(link->GetConnection()));
+        return false;
+    }
 
     conn->onEvent(event);
 

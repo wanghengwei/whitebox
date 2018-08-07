@@ -3,6 +3,7 @@ import { Observable, bindNodeCallback } from "rxjs";
 import broker from "../broker";
 import { map } from "rxjs/operators";
 import { ActionResult } from "../activity";
+import logger from "../logger";
 
 
 // class SendEventMetadata {
@@ -17,7 +18,27 @@ export class SendActionActivity extends SimpleActivity {
     connectionIndex: number = 0;
 
     doProceed(ctx: any): Observable<any> {
-        let f = (arg, cb) => broker[`ActionSendEvent${this.event}`](arg, cb);
+        let f = (arg, cb) => {
+            logger.info({ action_name: this.event, args }, `SendEvent ${this.event}`);
+
+            let cb2 = (err, res) => {
+                if (err) {
+                    logger.fatal({ grpc_error: err }, `SendEvent ${this.event} FAILED`);
+                } else if (res.error) {
+                    if (this.onErrorHandler != 'ignore') {
+                        logger.error({ error: res.error }, `SendEvent ${this.event} FAILED`);
+                    } else {
+                        logger.warn({ error: res.error }, `SendEvent ${this.event} FAILED`);
+                    }
+                } else {
+                    logger.info({ action_name: this.event, args, result: res }, `SendEvent ${this.event} OK`);
+                }
+
+                // logger.info({action_name: this.event, args, result: res, grpc_error: err}, `SendEvent ${this.event} DONE`)
+                cb(err, res);
+            };
+            broker[`ActionSendEvent${this.event}`](arg, cb);
+        };
         let args = {
             connectionId: {
                 account: ctx.robot.account,

@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
-import { interval, Subject, zip } from "rxjs";
-import { map } from "rxjs/operators";
+import { interval, Subject, zip, empty, from, concat, timer, of } from "rxjs";
+import { map, buffer, windowToggle, concatAll, windowCount, flatMap, ignoreElements } from "rxjs/operators";
 import { clearInterval, setInterval } from "timers";
 import broker from "./broker";
 import { RestartError } from "./errors";
@@ -27,7 +27,7 @@ export interface JobManager {
 
 class JobManagerImpl implements JobManager {
     rate: number = 1;
-    maxCapacity: number = 10;
+    maxCapacity: number = 1000;
     curCapacity: number = this.maxCapacity;
 
     events: EventEmitter = new EventEmitter();
@@ -45,8 +45,11 @@ class JobManagerImpl implements JobManager {
         this.addEventListeners();
 
         let t = interval(1000);
-        let speedControlledJobs = zip(t, this.jobsToBeRun.asObservable()).pipe(
-            map(x => x[1]),
+        // let speedControlledJobs = zip(t, this.jobsToBeRun.asObservable()).pipe(
+        //     map(x => x[1]),
+        // );
+        let speedControlledJobs = this.jobsToBeRun.pipe(
+            flatMap(j => concat(timer(1000).pipe(ignoreElements()), of(j))),
         );
         speedControlledJobs.subscribe(this);
     }
@@ -56,9 +59,10 @@ class JobManagerImpl implements JobManager {
         this.events.on('roomEntered', (job, action, args) => {
             job.heartBeatTimer = setInterval(() => {
                 logger.info({ robot: args.connectionId.account }, "sendHearBeat");
-                broker.ActionSendEventCEventVideoPlayerHeartBeatNotify({ connectionId: args.connectionId }, (err, _) => {
-                    if (err) {
+                broker.ActionSendEventCEventVideoPlayerHeartBeatNotify({ connectionId: args.connectionId }, (err, res) => {
+                    if (err || res.error) {
                         // 如果发送心跳错误，那应该是连接被断开了。停止发心跳
+                        logger.info({robot: args.connectionId.account}, "stopHearBeat");
                         clearTimeout(job.heartBeatTimer);
                     }
                 });
@@ -73,21 +77,22 @@ class JobManagerImpl implements JobManager {
     next(job: Job) {
         job.run().subscribe(result => {
             // job执行的结果在这里就处理掉了
-            logger.info({ result }, "action done");
+            // logger.info({ result }, "action done");
             // 有些result会触发一些event
             if (result.action.name == 'CEventVideoRoomEnterRoom' && result.ok()) {
-                logger.info("trigger event roomEntered");
+                logger.debug("trigger event roomEntered");
                 this.events.emit('roomEntered', job, result.action, result.args);
             }
         }, err => {
             // 这里是否所有的错误都是无法恢复的？
-            logger.error({ error: err }, "job error");
+            logger.debug({ error: err }, "job error");
+            job.teardownRobot();
             // 当一个job的执行队列失败时，应该怎么做？
             // 应该确保job对应的数据都清理掉，比如连接？
             // 然后重新执行？
             // 看看错误类型吧
             if (err instanceof RestartError) {
-                logger.info({ account: job.robot.account }, "restart job");
+                logger.debug({ account: job.robot.account }, "restart job");
                 this.jobsToBeRun.next(job);
             } else {
                 this.curCapacity++;
@@ -120,7 +125,7 @@ class JobManagerImpl implements JobManager {
     addJob(job: Job) {
         // this.jobs.push(job);
         this.curCapacity--;
-        logger.info({ current: this.curCapacity }, "addJob");
+        logger.info({ capacity: this.curCapacity }, "add job");
         this.jobsToBeRun.next(job);
     }
 }

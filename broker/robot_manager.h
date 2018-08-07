@@ -12,7 +12,7 @@ public:
     virtual ~RobotManager() {}
 
     // 根据帐号找到机器人。没找到就返回null
-    virtual std::shared_ptr<Robot> findRobot(const std::string& acc) const = 0;
+    virtual std::weak_ptr<Robot> findRobot(const std::string& acc) const = 0;
 
     // 初始化一个robot
     virtual void setupRobot(const std::string& acc, std::map<std::string, std::string>&& props) = 0;

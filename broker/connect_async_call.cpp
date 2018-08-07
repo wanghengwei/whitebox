@@ -3,10 +3,7 @@
 #include "connector_manager.h"
 #include "errors.h"
 #include "connector.h"
-#include <boost/log/trivial.hpp>
-#include <fmt/format.h>
-
-using namespace fmt::literals;
+#include "logging.h"
 
 // 用于连接服务器的异步操作
 class ConnectAsyncCall final : public AsyncCallImpl<ConnectAsyncCall, ConnectParams, Result> {
@@ -35,7 +32,7 @@ protected:
         auto connId = request().connectionid();
         std::string pass = request().password();
 
-        BOOST_LOG_TRIVIAL(info) << "find connector for " << connId.service();
+        BOOST_LOG_TRIVIAL(debug) << "find connector for " << connId.service();
 
         // 真正发起连接。需要找到对应服务的Connector
         auto connector = m_connectorManager.findConnector(connId.service());
@@ -57,7 +54,8 @@ protected:
         }
 
         // 找到connector了，开始发起连接
-        BOOST_LOG_TRIVIAL(info) << "begin connect: addr=" << addr << ", port=" << port << ", acc=" << connId.account();
+        // BOOST_LOG_TRIVIAL(info) << "Connect: addr=" << addr << ", port=" << port << ", acc=" << connId.account();
+        // BOOST_LOG_TRIVIAL(info) << "Connect: srv={}, addr={}, port={}, acc={}, idx={}"_format(connId.service(), addr, port, connId.account(), connId.connectionIndex());
 
         connector->connect(addr, port, connId.account(), pass, connId.index(), [this](std::shared_ptr<Connection> conn, const std::error_code& ec, const std::string& msg) {
             // 向grpc报告最终的结果

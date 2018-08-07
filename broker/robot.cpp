@@ -14,21 +14,21 @@ public:
         return m_acc;
     }
 
-    std::shared_ptr<Connection> findConnection(const std::string& serviceName, int connectionIndex) override {
+    std::weak_ptr<Connection> findConnection(const std::string& serviceName, int connectionIndex) override {
         auto it = m_conns.find(serviceName);
         if (it == m_conns.end()) {
-            return nullptr;
+            return std::weak_ptr<Connection>{};
         }
 
         auto it2 = it->second.find(connectionIndex);
         if (it2 == it->second.end()) {
-            return nullptr;
+            return std::weak_ptr<Connection>{};
         }
 
         // 检查连接是不是被关闭了
         if (it2->second->isClosed()) {
             it->second.erase(it2);
-            return nullptr;
+            return std::weak_ptr<Connection>{};
         }
 
         return it2->second;

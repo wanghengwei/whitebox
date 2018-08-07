@@ -2,6 +2,8 @@
 #include "async_call_impl.h"
 #include "robot_manager.h"
 #include <boost/log/trivial.hpp>
+#include <fmt/format.h>
+using namespace fmt::literals;
 
 class RobotSetupAsyncCall final : public AsyncCallImpl<RobotSetupAsyncCall, InitParams, Error> {
 public:
@@ -18,7 +20,7 @@ public:
 
         std::map<std::string, std::string> m{props.begin(), props.end()};
 
-        BOOST_LOG_TRIVIAL(info) << "setup a robot: account=" << acc << ", sizeOfData=" << props.size();
+        
 
         m_robotManager.setupRobot(acc, std::move(m));
 

@@ -48,14 +48,14 @@ protected:
 		std::string srv = cid.service();
 		int idx = cid.index();
 
-		auto robot = m_robotManager.findRobot(acc);
+		auto robot = m_robotManager.findRobot(acc).lock();
 		if (!robot) {
 			auto e = reply().mutable_error();
 			e->set_errorcode((int)whitebox::errc::CANNOT_FIND_ROBOT);
 			e->set_errorcategory(whitebox::ERROR_CATEGORY);
 			e->set_message("cannot find robot: acc={}"_format(acc));
 		} else {
-			auto conn = robot->findConnection(srv, idx);
+			auto conn = robot->findConnection(srv, idx).lock();
 			if (!conn) {
 				auto e = reply().mutable_error();
 				e->set_errorcode((int)whitebox::errc::CANNOT_FIND_CONNECTION);

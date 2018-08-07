@@ -1,6 +1,6 @@
 #include "connection_impl.h"
+#include "logging.h"
 #include <algorithm>
-#include <boost/log/trivial.hpp>
 #include <video_platform_impl/share/netengine/BiboFrame/Event.h>
 #include <video_platform_impl/share/netengine/net.h>
 #include <game_event/EventFragmentManager.h>
@@ -20,6 +20,13 @@ static bool shouldWrap(IEvent *ev)
         && id != CLSID_CEventQueryVideoAccountInfo
         && id != CLSID_CEventQueryVideoAccountInfoRes
     ;
+}
+
+ConnectionImpl::~ConnectionImpl() {
+    // 这里应该会触发OnConnClose，需要注意
+    // 这是唯一将link的ptr设置为null的地方。
+    m_link->SetPtr(nullptr);
+    m_link->Close("user");
 }
 
 void ConnectionImpl::sendEvent(IEvent* ev) {
@@ -62,7 +69,7 @@ void ConnectionImpl::makeFragmentThenSend(IEvent *ev) {
 }
 
 void ConnectionImpl::waitEvent(std::function<int(IEvent*)> cond, std::function<void(int, IEvent*)> cb) {
-    BOOST_LOG_TRIVIAL(info) << "ConnectionImpl::waitEvent: this=" << this;
+    BOOST_LOG_TRIVIAL(info) << "[{}] ConnectionImpl::waitEvent:"_format(m_link->GetConnection()->GetAccountName());
     m_eventHandlers.push_back({cond, cb});
 }
 
@@ -77,7 +84,8 @@ void ConnectionImpl::onEvent(IEvent* ev) {
         bool b = p->GetAttachedEvent(&inner);
         if (!b) {
             // 应该不正常，咋办？
-            BOOST_LOG_TRIVIAL(warning) << "get attached event failed";
+            // 看起来就是有消息会失败，算了不管
+            // BOOST_LOG_TRIVIAL(warning) << "get attached event failed";
             return;
         }
         onRealEvent(inner);
@@ -96,7 +104,7 @@ void ConnectionImpl::onRealEvent(IEvent *ev) {
     });
 
     for (auto i = it; i != m_eventHandlers.end(); ++i) {
-        BOOST_LOG_TRIVIAL(info) << "call event handler";
+        // BOOST_LOG_TRIVIAL(info) << "call event handler";
         i->callback(i->matchedIndex, i->matchedEvent);
     }
 

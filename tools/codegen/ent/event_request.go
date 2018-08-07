@@ -37,7 +37,7 @@ void init{{ .Metadata.FullName }}({{ $eventName }}& ev, const EventRequestParams
 	{{ range .Spec.Params }}
 	{
 		auto raw = {{.RawValue}};
-		BOOST_LOG_TRIVIAL(info) << "set {{ $eventName }}.{{.Field}} = " << raw;
+		BOOST_LOG_TRIVIAL(debug) << "set {{ $eventName }}.{{.Field}} = " << raw;
 		try {
 			ev.{{.Field}} = {{.CastFunc}}(raw);
 		} catch (const boost::bad_lexical_cast& ex) {
