@@ -67,6 +67,9 @@ public:
                 // 在deadline前一直取，直到时间到为止。
                 auto nst = m_server.queue().AsyncNext(&tag, &ok, deadline);
 
+                // 此时当前时间应当就是deadline
+                m_robotManager.update(deadline);
+
                 if (nst == grpc::CompletionQueue::SHUTDOWN) {
                     // 不应该的情况
                     return 1;

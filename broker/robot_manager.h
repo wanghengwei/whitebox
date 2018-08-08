@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <chrono>
 #include <fruit/fruit_forward_decls.h>
 
 class Robot;
@@ -20,6 +21,10 @@ public:
 
     // 保存一个conn到某个robot下
     virtual void saveConnection(const std::string& acc, const std::string& serviceName, int index, std::shared_ptr<Connection> conn) = 0;
+
+    // 定时执行动作
+    // 比如目前有清理超时回调的工作需要周期性判断
+    virtual void update(const std::chrono::system_clock::time_point& now) = 0;
 };
 
 fruit::Component<RobotManager> getRobotManager();

@@ -100,7 +100,7 @@ function createActivityByType(t: string): Activity {
         act = new ConnectActionActivity();
     } else if (t == 'SendEvent') {
         act = new SendActionActivity();
-    } else if (t == 'recv') {
+    } else if (t == 'RecvEvent') {
         act = new RecvActionActivity();
     } else if (t == 'SendRecvEvent') {
         act = new SendRecvEventActivity();

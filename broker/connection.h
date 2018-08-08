@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <chrono>
 
 struct IEvent;
 
@@ -15,4 +16,6 @@ public:
     virtual void setClosed() = 0;
 
     virtual bool isClosed() const = 0;
+
+    virtual void update(const std::chrono::system_clock::time_point& now) = 0;
 };

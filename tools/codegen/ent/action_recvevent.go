@@ -3,7 +3,7 @@ package ent
 import "fmt"
 
 const (
-	ACTION_SENDRECVEVENT_HEADER_TEMPLATE = `
+	ACTION_RECVEVENT_HEADER_TEMPLATE = `
 #pragma once
 
 #include "../async_call.h"
@@ -14,14 +14,13 @@ class Server;
 AsyncCall* create{{.Metadata.FullName}}(Server&, RobotManager&);
 	`
 
-	ACTION_SENDRECVEVENT_CPP_TEMPLATE = `
+	ACTION_RECVEVENT_CPP_TEMPLATE = `
 {{range .Metadata.IncludeHeaders}}
 #include <{{.}}>
 {{end}}
 
 #include "{{.HeaderFileName}}"
-#include "{{.Spec.SendSpec.Event.HeaderFileName}}"
-{{range .Spec.RecvSpec.Events}}
+{{range .Spec.Events}}
 #include "{{.HeaderFileName}}"
 {{end}}
 
@@ -65,31 +64,15 @@ protected:
 				e->set_errorcategory(whitebox::ERROR_CATEGORY);
 				e->set_message("cannot find connection: acc={}, srv={}, idx={}"_format(acc, srv, idx));
 			} else {
-				{{.Spec.SendSpec.Event.Spec.EventName}} ev;
-				try {
-					init{{.Spec.SendSpec.Event.Metadata.FullName}}(ev, request(), *robot);
-				} catch (const boost::bad_lexical_cast& ex) {
-					auto e = reply().mutable_error();
-					e->set_errorcode((int)whitebox::errc::BAD_CAST);
-					e->set_errorcategory(whitebox::ERROR_CATEGORY);
-					if (const std::string* info = boost::get_error_info<whitebox::errmsg>(ex)) {
-						e->set_message(*info);
-					}
-					finish();
-					return;
-				}
-
-				conn->sendEvent(&ev);
-
 				conn->waitEvent([](IEvent* ev) {
-					{{ range $i, $e := .Spec.RecvSpec.Events }}
+					{{ range $i, $e := .Spec.Events }}
 					if (ev->GetCLSID() == {{$e.Spec.EventName}}::_GetCLSID()) {
 						return {{$i}};
 					}
 					{{ end }}
 					return -1;
 				}, [this](int matchedEventIndex, IEvent* ev) {
-					{{range $i, $e := .Spec.RecvSpec.Events}}
+					{{range $i, $e := .Spec.Events}}
 					if (matchedEventIndex == {{$i}}) {
 						fillReplyBy{{ $e.Metadata.FullName }}(*({{$e.Spec.EventName}}*)ev, reply());
 						finish();
@@ -100,7 +83,7 @@ protected:
 					auto e = reply().mutable_error();
 					e->set_errorcode((int)whitebox::errc::TIMEOUT);
 					e->set_errorcategory(whitebox::ERROR_CATEGORY);
-					e->set_message("action %s timeout"_format("{{.Metadata.FullName}}"));
+					e->set_message("action {} timeout"_format("{{.Metadata.FullName}}"));
 					finish();
 				});
 
@@ -124,61 +107,50 @@ AsyncCall* create{{$className}}(Server& svr, RobotManager& rm) {
 	`
 )
 
-type ActionSendRecvEvent struct {
+type ActionRecvEvent struct {
 	Metadata Metadata `yaml:"metadata"`
 	Spec     struct {
-		SendSpec struct {
-			EventRef string `yaml:"eventRef"`
-			Event    *EventRequest
-			// RoomProxyWrap bool `yaml:"roomProxyWrap"` // 发送消息是否wrap。mgc会用到。默认应该不wrap
-			// EventName string
-		} `yaml:"send"`
-		RecvSpec struct {
-			EventRefs []string `yaml:"eventRefs"`
-			Events    []*EventResponse
-			// EventNames []string
-		} `yaml:"recv"`
+		EventRefs []string `yaml:"eventRefs"`
+		Events    []*EventResponse
+		// EventNames []string
 	} `yaml:"spec"`
 
 	HeaderCpp
 }
 
-func NewActionSendRecvEvent() *ActionSendRecvEvent {
-	r := &ActionSendRecvEvent{}
-	// r.Spec.SendSpec.RoomProxyWrap = false
+func NewActionRecvEvent() *ActionRecvEvent {
+	r := &ActionRecvEvent{}
 
 	return r
 }
 
-func (e *ActionSendRecvEvent) Class() string {
+func (e *ActionRecvEvent) Class() string {
 	return CLASS_ACTION
 }
 
-func (e *ActionSendRecvEvent) Order() string {
-	return ORDER_SENDRECVEVENT
+func (e *ActionRecvEvent) Order() string {
+	return ORDER_RECVEVENT
 }
 
-func (e *ActionSendRecvEvent) Name() string {
+func (e *ActionRecvEvent) Name() string {
 	return e.Metadata.Name
 }
 
-func (e *ActionSendRecvEvent) OnParsed() error {
-	e.Metadata.fill(e, e.Spec.SendSpec.EventRef)
+func (e *ActionRecvEvent) OnParsed() error {
+	e.Metadata.fill(e, e.Spec.EventRefs[0])
 	e.init(&e.Metadata)
 
-	// 通过event ref找到真正的event name
-
 	return nil
 }
 
-func (t *ActionSendRecvEvent) Generate() error {
+func (t *ActionRecvEvent) Generate() error {
 	// 一个收发消息的动作生成2个文件
-	err := executeTemplate(ACTION_SENDRECVEVENT_HEADER_TEMPLATE, AUTOGEN_CPP_FOLDER, t.HeaderFileName, t)
+	err := executeTemplate(ACTION_RECVEVENT_HEADER_TEMPLATE, AUTOGEN_CPP_FOLDER, t.HeaderFileName, t)
 	if err != nil {
 		return err
 	}
 
-	err = executeTemplate(ACTION_SENDRECVEVENT_CPP_TEMPLATE, AUTOGEN_CPP_FOLDER, t.CppFileName, t)
+	err = executeTemplate(ACTION_RECVEVENT_CPP_TEMPLATE, AUTOGEN_CPP_FOLDER, t.CppFileName, t)
 	if err != nil {
 		return err
 	}
@@ -186,31 +158,15 @@ func (t *ActionSendRecvEvent) Generate() error {
 	return nil
 }
 
-func (t *ActionSendRecvEvent) FillEventsByRef(eventMap map[string]Event) error {
-	e, ok := eventMap[t.Spec.SendSpec.EventRef]
-	if !ok {
-		return fmt.Errorf("cannot find event by ref %s", t.Spec.SendSpec.EventRef)
-	}
-
-	t.Spec.SendSpec.Event = e.(*EventRequest)
-	// t.Spec.SendSpec.EventName = e.EventName()
-
-	for _, ref := range t.Spec.RecvSpec.EventRefs {
-		e, ok = eventMap[ref]
+func (t *ActionRecvEvent) FillEventsByRef(eventMap map[string]Event) error {
+	for _, ref := range t.Spec.EventRefs {
+		e, ok := eventMap[ref]
 		if !ok {
-			return fmt.Errorf("cannot find event by ref %s", t.Spec.SendSpec.EventRef)
+			return fmt.Errorf("cannot find event by ref %s", ref)
 		}
 
-		t.Spec.RecvSpec.Events = append(t.Spec.RecvSpec.Events, e.(*EventResponse))
-		// t.Spec.RecvSpec.EventNames = append(t.Spec.RecvSpec.EventNames, e.EventName())
+		t.Spec.Events = append(t.Spec.Events, e.(*EventResponse))
 	}
 
 	return nil
 }
-
-// func (t *ActionSendRecvEvent) OutputFileNames() []string {
-// 	return []string{
-// 		fmt.Sprintf("%s.h", t.Metadata.Name),
-// 		fmt.Sprintf("%s.cpp", t.Metadata.Name),
-// 	}
-// }

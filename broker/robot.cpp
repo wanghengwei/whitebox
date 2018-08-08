@@ -57,6 +57,14 @@ public:
 
         return it->second;
     }
+
+    void update(const std::chrono::system_clock::time_point& now) override {
+        for (auto& s: m_conns) {
+            for (auto& c : s.second) {
+                c.second->update(now);
+            }
+        }
+    }
 private:
     std::string m_acc;
 

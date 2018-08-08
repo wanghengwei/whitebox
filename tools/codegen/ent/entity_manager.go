@@ -17,6 +17,7 @@ const (
 
 	ORDER_SENDRECVEVENT = "SendRecvEvent"
 	ORDER_SENDEVENT     = "SendEvent"
+	ORDER_RECVEVENT     = "RecvEvent"
 
 	AUTOGEN_CPP_FOLDER = "broker/autogen/"
 	PROTOS_FOLDER      = "protos/"
@@ -220,6 +221,8 @@ func newActionItem(order string) Entity {
 		return NewActionSendRecvEvent()
 	case ORDER_SENDEVENT:
 		return NewActionSendEvent()
+	case ORDER_RECVEVENT:
+		return NewActionRecvEvent()
 	default:
 		log.Fatalf("no order %s\n", order)
 		return nil

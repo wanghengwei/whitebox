@@ -6,9 +6,11 @@
         <action type="SendRecvEvent" name="CEventVideoInitConnectionRequest" service="User" conn="0"/>
         <action type="SendRecvEvent" name="CEventVideoRoomEnterRoom" service="User" conn="0"/>
 
-        <action type="loop" count="-1">
+        <action type="RecvEvent" name="CEventBuyVideoVipRes" service="User" conn="0"/>
+
+        <!-- <action type="loop" count="-1">
             <action type="SendRecvEvent" name="CEventVideoSendGift" service="User" conn="0" delay="15"/>
-        </action>
+        </action> -->
 
         <action type="SendEvent" name="CEventVideoRoomLeaveRoom" service="User" conn="0"/>
 

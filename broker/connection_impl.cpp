@@ -70,7 +70,13 @@ void ConnectionImpl::makeFragmentThenSend(IEvent *ev) {
 
 void ConnectionImpl::waitEvent(std::function<int(IEvent*)> cond, std::function<void(int, IEvent*)> cb) {
     BOOST_LOG_TRIVIAL(info) << "[{}] ConnectionImpl::waitEvent:"_format(m_link->GetConnection()->GetAccountName());
-    m_eventHandlers.push_back({cond, cb});
+
+    // 把条件和回调都保存起来。当有消息满足条件时回调会被调用
+    // 另外，如果一段时间还没消息来，那么回调也应该被调用，错误码是超时。
+    // 也许应该有另外一组回调是不超时的，就像以前的handler那样。再议
+    EventHandler eh{cond, cb};
+    eh.deadline = m_now + std::chrono::seconds{20};
+    m_eventHandlers.emplace_back(std::move(eh));
 }
 
 void ConnectionImpl::onEvent(IEvent* ev) {
@@ -109,4 +115,21 @@ void ConnectionImpl::onRealEvent(IEvent *ev) {
     }
 
     m_eventHandlers.erase(it, m_eventHandlers.end());
+}
+
+void ConnectionImpl::update(const std::chrono::system_clock::time_point& now) {
+    this->m_now = now;
+    clearTimeoutWaitingCallbacks(now);
+}
+
+void ConnectionImpl::clearTimeoutWaitingCallbacks(const std::chrono::system_clock::time_point& now) {
+    auto tobeRemoved = std::remove_if(m_eventHandlers.begin(), m_eventHandlers.end(), [&now](auto& h) {
+        return h.deadline < now;
+    });
+
+    for (auto it = tobeRemoved; it != m_eventHandlers.end(); ++it) {
+        it->callback(-1, nullptr);
+    }
+
+    m_eventHandlers.erase(tobeRemoved, m_eventHandlers.end());
 }

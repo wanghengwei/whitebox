@@ -53,8 +53,21 @@ public:
 
         robot->saveConnection(serviceName, index, conn);
     }
+
+    void update(const std::chrono::system_clock::time_point& now) override {
+        ++m_counter;
+
+        if (m_counter % 10 == 0) {
+            for (auto& robot : m_robots) {
+                robot.second->update(now);
+            }
+        }
+    }
 private:
     std::map<std::string, std::shared_ptr<Robot>> m_robots;
+
+    // 只是个update计数器，没啥别的意义
+    unsigned long long m_counter{};
 };
 
 fruit::Component<RobotManager> getRobotManager() {

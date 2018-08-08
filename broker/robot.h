@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <map>
+#include <chrono>
 
 class Connection;
 
@@ -15,6 +16,8 @@ public:
     virtual void saveConnection(const std::string& serviceName, int connectionIndex, std::shared_ptr<Connection> conn) = 0;
 
     virtual std::string getProperty(const std::string& key) const = 0;
+
+    virtual void update(const std::chrono::system_clock::time_point& now) = 0;
 };
 
 std::shared_ptr<Robot> createRobot(std::string acc, std::map<std::string, std::string>&& props);

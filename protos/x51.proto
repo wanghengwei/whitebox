@@ -24,6 +24,8 @@ service Broker {
     
     rpc ActionSendEventCEventVideoPlayerHeartBeatNotify (EventRequestParams) returns (Result);
     
+    rpc ActionRecvEventCEventBuyVideoVipRes (EventRequestParams) returns (Result);
+    
 }
 
 	
