@@ -16,3 +16,5 @@ CEventEncryptEvList 一个机器人收到这个event后，应该对这里面的e
 
 超时怎么做？
 等待event的都应该有超时。
+
+是不是可以让用户加入一些自定义的函数，比如 `bool isVIP(Robot& robot)` 这种，可以让用户在action的定义的 condition 之类地方调用

@@ -48,12 +48,16 @@ spec:
 
 ---
 class: Action
-order: RecvEvent
+order: SendRecvEvent
 metadata:
-  description: "just test"
+  description: "购买vip"
 spec:
-  eventRefs:
-  - CEventBuyVideoVipRes
+  condition:
+  send:
+    eventRef: CEventBuyVideoVip
+  recv:
+    eventRefs:
+    - CEventBuyVideoVipRes
 
 
 # Events:
@@ -185,6 +189,29 @@ spec:
 
 ---
 class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/modules/video_vip/shared/event/video_vip_event.h
+spec:
+  eventName: CEventBuyVideoVip
+  params:
+  - field: m_vip_level
+    fromPlayerData: "BUY_VIP_LEVEL"
+    type: Int
+    description: "要购买的vip级别"
+  - field: m_duration
+    fromPlayerData: "BUY_VIP_DUR"
+    type: Int
+  - field: m_buy_type
+    constant: VVBT_Start
+    type: Symbol
+  - field: m_cost_type
+    fromPlayerData: "BUY_VIP_COST_TYPE"
+    type: Int
+
+---
+class: Event
 order: Response
 metadata:
   include_headers:
@@ -192,4 +219,4 @@ metadata:
 spec:
   eventName: CEventBuyVideoVipRes
   errorCodeField: m_ret
-
+  errorCategory: VideoVipOperationResult
