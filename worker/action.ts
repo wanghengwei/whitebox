@@ -7,6 +7,7 @@ export enum Order {
 }
 
 export abstract class Action {
+
     constructor(protected doc: any) { }
 
     order(): Order {
@@ -22,10 +23,26 @@ export abstract class Action {
         return this.getNameFromEvent();
     }
 
+    fullName(): string {
+        return this.constructor.name + this.name();
+    }
+
     protected abstract getNameFromEvent(): string;
 
     // 从total里面摘选出当前动作需要发送的玩家数据。
     abstract projectPlayerData(total: any): any;
+
+    headerFileName(): string {
+        return `${this.fullName()}.h`;
+    }
+
+    cppFileName(): string {
+        return `${this.fullName()}.cpp`;
+    }
+
+    outputFileNames(): string[] {
+        return [this.headerFileName(), this.cppFileName()];
+    }
 }
 
 

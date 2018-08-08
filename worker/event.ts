@@ -6,6 +6,7 @@ export enum Order {
 }
 
 export abstract class Event {
+
     constructor(protected doc: any) { }
 
     order(): Order {
@@ -20,6 +21,34 @@ export abstract class Event {
             // eventName 有可能不存在，比如写的不规范等等。因此需要加入校验机制 TODO
             return this.doc.spec.eventName;
         }
+    }
+
+    fullName(): string {
+        return this.constructor.name + this.name();
+    }
+
+    headerFileName(): string {
+        return `${this.fullName()}.h`;
+    }
+
+    cppFileName(): string {
+        return `${this.fullName()}.cpp`;
+    }
+
+    outputFileNames(): string[] {
+        return [this.headerFileName(), this.cppFileName()];
+    }
+
+    includeHeaders(): string[] {
+        if (!this.doc.metadata) {
+            return []
+        }
+
+        if (!this.doc.metadata.include_headers) {
+            return [];
+        }
+        
+        return this.doc.metadata.include_headers;
     }
 }
 

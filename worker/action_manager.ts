@@ -7,7 +7,12 @@ import * as ev from './event';
 // yml哪里来……还不知道，目前就从本地文件读。
 interface ActionManager {
     findAction(actionType: action.Order, actionName: string): action.Action;
+
     findEvent(eventOrder: ev.Order, eventRef: string): ev.Event
+
+    actions: action.Action[];
+    
+    events: ev.Event[];
 }
 
 class LocalFileActionManager implements ActionManager {
