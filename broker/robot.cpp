@@ -5,7 +5,7 @@
 
 class RobotImpl final : public Robot {
 public:
-    explicit RobotImpl(std::string acc, std::map<std::string, std::string>&& props) : m_acc{acc}, m_props{std::move(props)} {}
+    explicit RobotImpl(std::string acc, std::map<std::string, std::string>&& props) : m_acc{acc} /*, m_props{std::move(props)}*/ {}
 
     RobotImpl(RobotImpl&) = delete;
     RobotImpl& operator=(RobotImpl&) = delete;
@@ -49,14 +49,14 @@ public:
         }
     }
 
-    std::string getProperty(const std::string& key) const override {
-        auto it = m_props.find(key);
-        if (it == m_props.end()) {
-            return "";
-        }
+    // std::string getProperty(const std::string& key) const override {
+    //     auto it = m_props.find(key);
+    //     if (it == m_props.end()) {
+    //         return "";
+    //     }
 
-        return it->second;
-    }
+    //     return it->second;
+    // }
 
     void update(const std::chrono::system_clock::time_point& now) override {
         for (auto& s: m_conns) {
@@ -71,7 +71,7 @@ private:
     // 每个机器人按 (service, index) 的方式保存连接
     std::map<std::string, std::map<int, std::shared_ptr<Connection>>> m_conns;
 
-    std::map<std::string, std::string> m_props;
+    // std::map<std::string, std::string> m_props;
 };
 
 std::shared_ptr<Robot> createRobot(std::string acc, std::map<std::string, std::string>&& props) {

@@ -5,6 +5,8 @@ import broker from "../broker";
 import logger from "../logger";
 import { Robot } from "../robot";
 import { SimpleActivity } from "./simple";
+import actionManager from "../action_manager";
+import * as action from '../action';
 
 // class ConnectMetadata implements Metadata {
 //   type: string = "connect";

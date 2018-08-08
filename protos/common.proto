@@ -22,6 +22,7 @@ message Error {
     string message = 3;
 }
 
+// 由于不能直接往oneof里面放map，因此包装一下
 message Data {
     map<string, string> data = 1;
 }

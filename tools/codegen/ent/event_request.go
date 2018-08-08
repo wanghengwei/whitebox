@@ -153,7 +153,7 @@ func (e *EventRequest) OnParsed() error {
 		if len(param.FromPlayerData) > 0 {
 			// get value from player data
 			// 这个repr的结果肯定是个string
-			repr := fmt.Sprintf(`robot.getProperty("%s")`, param.FromPlayerData)
+			repr := fmt.Sprintf(`request.data().at("%s")`, param.FromPlayerData)
 			param.RawValue = repr
 			param.CastFunc = castFuncByTargetType(vt)
 			continue

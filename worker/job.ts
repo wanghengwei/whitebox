@@ -1,12 +1,12 @@
-import { Robot } from "./robot";
-import { Observable, Subject, bindNodeCallback, concat } from "rxjs";
-import { TestCase } from "./testcase";
-import { JobDef } from "./job_def";
-import testCaseManager from './testcase_manager';
+import { bindNodeCallback, concat, Observable, Subject } from "rxjs";
 import { flatMap, ignoreElements, single } from "rxjs/operators";
-import broker, { proto } from './broker';
-import logger from "./logger";
 import { ActionResult } from "./activity";
+import broker from './broker';
+import { JobTemplate } from "./job_template";
+import logger from "./logger";
+import { Robot } from "./robot";
+import { TestCase } from "./testcase";
+import testCaseManager from './testcase_manager';
 
 // 一个Job表示用例+robot，包含运行时数据。
 export class Job {
@@ -17,7 +17,7 @@ export class Job {
     testCase: Observable<TestCase>;
     stopNotifier: Subject<boolean>;
 
-    constructor(def: JobDef) {
+    constructor(def: JobTemplate) {
         this.robot = new Robot(def.account, def.playerData);
         // this.robot.setProperties(def.playerData);
         this.testCaseRef = def.testCaseRef;
@@ -30,7 +30,7 @@ export class Job {
     }
 
     public run(): Observable<ActionResult> {
-        logger.debug("prepared to run job");
+        // logger.debug("prepared to run job");
         // setup 成功后，
         // 等testcase到位了才开始执行
         // 如果setup 失败了，testcase也没必要等了，直接作为错误
@@ -52,7 +52,7 @@ export class Job {
 
                 let cb2 = (err, res) => {
                     if (err) {
-                        logger.fatal({grpc_error: err}, "setupRobot FAILED");
+                        logger.fatal({ grpc_error: err }, "setupRobot FAILED");
                     } else {
                         logger.info({ result: res }, "setupRobot OK");
                     }
@@ -76,7 +76,7 @@ export class Job {
         logger.info({ account: this.robot.account }, `teardownRobot`);
         broker.RobotTeardown({ account: this.robot.account }, (err, res) => {
             if (err) {
-                logger.fatal({grpc_error: err}, "teardownRobot FAILED");
+                logger.fatal({ grpc_error: err }, "teardownRobot FAILED");
             } else {
                 logger.info({ result: res }, "teardownRobot OK");
             }

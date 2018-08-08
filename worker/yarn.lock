@@ -6,6 +6,10 @@
   version "1.2.0"
   resolved "http://registry.npm.taobao.org/@types/events/download/@types/events-1.2.0.tgz#81a6731ce4df43619e5c8c945383b3e62a89ea86"
 
+"@types/js-yaml@^3.11.2":
+  version "3.11.2"
+  resolved "http://registry.npm.taobao.org/@types/js-yaml/download/@types/js-yaml-3.11.2.tgz#699ad86054cc20043c30d66a6fcde30bbf5d3d5e"
+
 "@types/node@*":
   version "10.5.4"
   resolved "http://registry.npm.taobao.org/@types/node/download/@types/node-10.5.4.tgz#6eccc158504357d1da91434d75e86acde94bb10b"
@@ -45,6 +49,12 @@ are-we-there-yet@~1.1.2:
   dependencies:
     delegates "^1.0.0"
     readable-stream "^2.0.6"
+
+argparse@^1.0.7:
+  version "1.0.10"
+  resolved "http://registry.npm.taobao.org/argparse/download/argparse-1.0.10.tgz#bcd6791ea5ae09725e17e5ad988134cd40b3d911"
+  dependencies:
+    sprintf-js "~1.0.2"
 
 ascli@~1:
   version "1.0.1"
@@ -155,6 +165,10 @@ end-of-stream@^1.1.0:
 escape-string-regexp@^1.0.5:
   version "1.0.5"
   resolved "http://registry.npm.taobao.org/escape-string-regexp/download/escape-string-regexp-1.0.5.tgz#1b61c0562190a8dff6ae3bb2cf0200ca130b86d4"
+
+esprima@^4.0.0:
+  version "4.0.1"
+  resolved "http://registry.npm.taobao.org/esprima/download/esprima-4.0.1.tgz#13b04cdb3e6c5d19df91ab6987a8695619b0aa71"
 
 fast-json-parse@^1.0.3:
   version "1.0.3"
@@ -269,6 +283,13 @@ is-fullwidth-code-point@^2.0.0:
 isarray@~1.0.0:
   version "1.0.0"
   resolved "http://registry.npm.taobao.org/isarray/download/isarray-1.0.0.tgz#bb935d48582cba168c06834957a54a3e07124f11"
+
+js-yaml@^3.12.0:
+  version "3.12.0"
+  resolved "http://registry.npm.taobao.org/js-yaml/download/js-yaml-3.12.0.tgz#eaed656ec8344f10f527c6bfa1b6e2244de167d1"
+  dependencies:
+    argparse "^1.0.7"
+    esprima "^4.0.0"
 
 lcid@^1.0.0:
   version "1.0.0"
@@ -538,6 +559,10 @@ split2@^2.2.0:
   resolved "http://registry.npm.taobao.org/split2/download/split2-2.2.0.tgz#186b2575bcf83e85b7d18465756238ee4ee42493"
   dependencies:
     through2 "^2.0.2"
+
+sprintf-js@~1.0.2:
+  version "1.0.3"
+  resolved "http://registry.npm.taobao.org/sprintf-js/download/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
 
 string-width@^1.0.1:
   version "1.0.2"

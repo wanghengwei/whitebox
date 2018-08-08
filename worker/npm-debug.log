@@ -1,0 +1,47 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/node', '/usr/bin/npm', 'search', 'yarn' ]
+2 info using npm@3.5.2
+3 info using node@v8.10.0
+4 silly mapToRegistry name -/all
+5 silly mapToRegistry using default registry
+6 silly mapToRegistry registry https://registry.npm.taobao.org/
+7 silly mapToRegistry uri https://registry.npm.taobao.org/-/all
+8 info updateIndex /home/wanghengwei/.npm/registry.npm.taobao.org/-/all/.cache.json
+9 warn Building the local index for the first time, please be patient
+10 silly update-index fetching https://registry.npm.taobao.org/-/all
+11 verbose request uri https://registry.npm.taobao.org/-/all
+12 verbose request no auth needed
+13 info attempt registry request try #1 at 上午11:56:53
+14 verbose request id 834f1684c6a5e733
+15 http request GET https://registry.npm.taobao.org/-/all
+16 http 200 https://registry.npm.taobao.org/-/all
+17 verbose headers { date: 'Wed, 08 Aug 2018 03:57:01 GMT',
+17 verbose headers   'content-type': 'application/json; charset=utf-8',
+17 verbose headers   'content-length': '18498341',
+17 verbose headers   connection: 'keep-alive',
+17 verbose headers   'x-current-requests': '1',
+17 verbose headers   vary: 'Origin',
+17 verbose headers   etag: '"11a4325-tbV99y/ee4aEozlmA6K4pFXszfo"',
+17 verbose headers   'x-readtime': '6008' }
+18 verbose stack Error: true true: -/all
+18 verbose stack     at makeError (/usr/share/npm/node_modules/npm-registry-client/lib/request.js:264:12)
+18 verbose stack     at CachingRegistryClient.<anonymous> (/usr/share/npm/node_modules/npm-registry-client/lib/request.js:252:14)
+18 verbose stack     at Request._callback (/usr/share/npm/node_modules/npm-registry-client/lib/request.js:172:14)
+18 verbose stack     at Request.self.callback (/usr/share/npm/node_modules/request/request.js:198:22)
+18 verbose stack     at emitTwo (events.js:126:13)
+18 verbose stack     at Request.emit (events.js:214:7)
+18 verbose stack     at Request.<anonymous> (/usr/share/npm/node_modules/request/request.js:1082:10)
+18 verbose stack     at emitOne (events.js:121:20)
+18 verbose stack     at Request.emit (events.js:211:7)
+18 verbose stack     at IncomingMessage.<anonymous> (/usr/share/npm/node_modules/request/request.js:1009:12)
+19 verbose statusCode 200
+20 verbose cwd /home/wanghengwei/workspace/src/whitebox/worker
+21 error Linux 4.15.0-30-generic
+22 error argv "/usr/bin/node" "/usr/bin/npm" "search" "yarn"
+23 error node v8.10.0
+24 error npm  v3.5.2
+25 error code E200
+26 error true true: -/all
+27 error If you need help, you may report this error at:
+27 error     <https://github.com/npm/npm/issues>
+28 verbose exit [ 1, true ]

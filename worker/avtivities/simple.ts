@@ -27,13 +27,13 @@ export abstract class SimpleActivity implements Activity {
         // 执行on_error的handler
         map(r => {
           if (!(r instanceof ActionResult)) {
-            logger.debug("r is not ActionResult, ignore");
+            // logger.debug("r is not ActionResult, ignore");
             return r;
           }
 
           if (r.ok()) {
             // 没有错误
-            logger.debug("no error, ignore");
+            // logger.debug("no error, ignore");
             return r;
           }
   
@@ -41,7 +41,7 @@ export abstract class SimpleActivity implements Activity {
             // 如果 on_error="restart" ，那么应当重新执行整个用例。
             // 做法就是抛出个错误，让最顶层去catchError
             // 不过这里有个问题，丢失了一次运行结果
-            logger.debug("restart job");
+            // logger.debug("restart job");
             throw new RestartError(r);
           } else if (this.onErrorHandler == 'retry') {
             // 重试当前动作

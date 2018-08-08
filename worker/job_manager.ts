@@ -45,9 +45,6 @@ class JobManagerImpl implements JobManager {
         this.addEventListeners();
 
         let t = interval(1000);
-        // let speedControlledJobs = zip(t, this.jobsToBeRun.asObservable()).pipe(
-        //     map(x => x[1]),
-        // );
         let speedControlledJobs = this.jobsToBeRun.pipe(
             flatMap(j => concat(timer(1000).pipe(ignoreElements()), of(j))),
         );
