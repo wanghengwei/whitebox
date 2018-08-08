@@ -220,3 +220,24 @@ spec:
   eventName: CEventBuyVideoVipRes
   errorCodeField: m_ret
   errorCategory: VideoVipOperationResult
+
+---
+class: Event
+order: Request
+metadata:
+spec:
+  eventName: CEventTakeVipSeat
+  params:
+  - field: m_seat_index
+    type: Int
+    value:
+      fromPlayerData: "CEventTakeVipSeat.m_seat_index"
+      default:
+        random:
+          from: 0
+          to: 5
+  - field: m_cost
+    type: Int
+    value:
+      fromPlayerData: "CEventTakeVipSeat.m_cost"
+      default: "0"
