@@ -22,6 +22,7 @@ class DummyJobReceiver implements JobReceiver {
                     "User.0.Port": "31000",
                     "ZONE_ID": "9999",
                     "ROOM_ID": "191",
+                    "BUY_VIP_LEVEL": "5",
                 })
             ),
         );

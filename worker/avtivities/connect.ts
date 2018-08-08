@@ -5,18 +5,6 @@ import broker from "../broker";
 import logger from "../logger";
 import { Robot } from "../robot";
 import { SimpleActivity } from "./simple";
-import actionManager from "../action_manager";
-import * as action from '../action';
-
-// class ConnectMetadata implements Metadata {
-//   type: string = "connect";
-
-//   name: string = "connect";
-
-//   constructor(public args: any) {
-
-//   }
-// }
 
 // 表示一个连接服务器的动作
 export class ConnectActionActivity extends SimpleActivity {

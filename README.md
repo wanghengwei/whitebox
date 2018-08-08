@@ -18,3 +18,9 @@ CEventEncryptEvList 一个机器人收到这个event后，应该对这里面的e
 等待event的都应该有超时。
 
 是不是可以让用户加入一些自定义的函数，比如 `bool isVIP(Robot& robot)` 这种，可以让用户在action的定义的 condition 之类地方调用
+
+以下两种情况要考虑：
+1. event有很多很多参数，每个参数都要有各种组合（虽然只是简单的int、string）。似乎可以在yml的param里用表达式等解决，比如简单的随机、选择
+2. event有字段是个vector，需要能往里面push东西。
+
+如果运行时playerData里缺少字段，会立刻crash，需要改改 (google::protobuf::FatalException)
