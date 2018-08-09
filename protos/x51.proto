@@ -7,9 +7,9 @@ import "common.proto";
 
 service Broker {
 
-	rpc RobotSetup (InitParams) returns (Error);
+    rpc RobotSetup (InitParams) returns (Error);
 
-	rpc RobotTeardown (TeardownParams) returns (Error);
+    rpc RobotTeardown (TeardownParams) returns (Error);
     
     rpc Connect (ConnectParams) returns (Result);
 
@@ -26,6 +26,7 @@ service Broker {
     
     rpc ActionSendRecvEventCEventBuyVideoVip (EventRequestParams) returns (Result);
     
+    rpc ActionSendRecvEventCEventTakeVipSeat (EventRequestParams) returns (Result);
+    
 }
 
-	

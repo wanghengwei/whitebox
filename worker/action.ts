@@ -69,6 +69,15 @@ export class ActionSendRecvEvent extends Action {
 
     }
 
+    sendEvent(): ev.EventRequest {
+        let ref = this.doc.spec.send.eventRef;
+        return actionManager.findEvent(ev.Order.Request, ref) as ev.EventRequest;
+    }
+
+    recvEvents(): ev.EventResponse[] {
+        return this.doc.spec.recv.eventRefs.map(ref => actionManager.findEvent(ev.Order.Response, ref) as ev.EventResponse);
+    }
+
 }
 
 export class ActionSendEvent extends Action {
@@ -87,6 +96,10 @@ export class ActionSendEvent extends Action {
             }
         }
         return res;
+    }
+
+    event(): ev.EventRequest {
+        return actionManager.findEvent(ev.Order.Request, this.doc.spec.eventRef) as ev.EventRequest;
     }
 
 }

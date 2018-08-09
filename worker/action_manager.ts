@@ -11,7 +11,7 @@ interface ActionManager {
     findEvent(eventOrder: ev.Order, eventRef: string): ev.Event
 
     actions: action.Action[];
-    
+
     events: ev.Event[];
 }
 
@@ -42,4 +42,5 @@ class LocalFileActionManager implements ActionManager {
 const actionManager: ActionManager = new LocalFileActionManager();
 
 export default actionManager;
-export {Order as ActionOrder} from './action';
+export { Order as ActionOrder } from './action';
+export { Order as EventOrder } from './event';

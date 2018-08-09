@@ -31,6 +31,8 @@ spec:
 ---
 class: Action
 order: SendRecvEvent
+metadata:
+  description: "送礼"
 spec:
   send:
     eventRef: CEventVideoSendGift
@@ -52,12 +54,23 @@ order: SendRecvEvent
 metadata:
   description: "购买vip"
 spec:
-  condition:
   send:
     eventRef: CEventBuyVideoVip
   recv:
     eventRefs:
     - CEventBuyVideoVipRes
+
+---
+class: Action
+order: SendRecvEvent
+metadata:
+  description: "抢座位"
+spec:
+  send:
+    eventRef: CEventTakeVipSeat
+  recv:
+    eventRefs:
+    - CEventTakeVipSeatRes
 
 
 # Events:
@@ -71,20 +84,25 @@ spec:
   eventName: CEventVideoInitConnectionRequest
   params:
   - field: roomID
-    fromPlayerData: "ROOM_ID"
     type: Int
+    value:
+      fromPlayerData: "ROOM_ID"
   - field: uid.account
-    expression: "robot.account()"
     type: LongLong
+    value:
+      expression: "robot.account()"
   - field: uid.zoneid
-    fromPlayerData: "ZONE_ID"
     type: Int
+    value:
+      fromPlayerData: "ZONE_ID"
   - field: uid.channel
-    constant: "VCT_X5"
     type: Symbol
+    value:
+      constant: "VCT_X5"
   - field: logic_version
-    constant: "VIDEO_LOGIC_VERSION_NUM_CURRENT"
     type: Symbol
+    value:
+      constant: "VIDEO_LOGIC_VERSION_NUM_CURRENT"
 
 ---
 class: Event
@@ -110,18 +128,23 @@ spec:
   eventName: CEventVideoRoomEnterRoom
   params:
   - field: m_room_id
-    fromPlayerData: "ROOM_ID"
+    value:
+      fromPlayerData: "ROOM_ID"
     type: Int
   - field: m_nick
-    expression: "robot.account()"
+    value:
+      expression: "robot.account()"
   - field: m_source
-    constant: "ERS_Normal"
+    value:
+      constant: "ERS_Normal"
     type: Symbol
   - field: m_gender
-    constant: "0"
+    value:
+      constant: "0"
     type: Int
   - field: m_level
-    constant: "0"
+    value:
+      constant: "0"
     type: Int
 
 ---
@@ -161,10 +184,12 @@ spec:
   eventName: CEventVideoSendGift
   params:
   - field: m_gift_count
-    constant: "1"
+    value:
+      constant: "1"
     type: Int
   - field: m_gift_id
-    constant: "1"
+    value:
+      constant: "1"
     type: Int
 ---
 class: Event
@@ -197,17 +222,21 @@ spec:
   eventName: CEventBuyVideoVip
   params:
   - field: m_vip_level
-    fromPlayerData: "BUY_VIP_LEVEL"
+    value:
+      fromPlayerData: "BUY_VIP_LEVEL"
     type: Int
     description: "要购买的vip级别"
   - field: m_duration
-    fromPlayerData: "BUY_VIP_DUR"
+    value:
+      fromPlayerData: "BUY_VIP_DUR"
     type: Int
   - field: m_buy_type
-    constant: VVBT_Start
+    value:
+      constant: VVBT_Start
     type: Symbol
   - field: m_cost_type
-    fromPlayerData: "BUY_VIP_COST_TYPE"
+    value:
+      fromPlayerData: "BUY_VIP_COST_TYPE"
     type: Int
 
 ---
@@ -225,6 +254,8 @@ spec:
 class: Event
 order: Request
 metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
 spec:
   eventName: CEventTakeVipSeat
   params:
@@ -241,3 +272,13 @@ spec:
     value:
       fromPlayerData: "CEventTakeVipSeat.m_cost"
       default: "0"
+---
+class: Event
+order: Response
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventTakeVipSeatRes
+  errorCodeField: m_res
+  errorCategory: TakeSeatResult
