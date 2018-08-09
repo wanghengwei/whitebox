@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "connector.h"
+#include <map>
 #include <share/network/eventframe/ClientBase.h>
 
 class RobotManager;

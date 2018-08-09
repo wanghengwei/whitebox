@@ -1,0 +1,284 @@
+
+class: Action
+order: SendRecvEvent
+spec:
+  send:
+    eventRef: CEventVideoInitConnectionRequest
+  recv:
+    eventRefs:
+    - CEventVideoInitConnectionResponse
+---
+
+class: Action
+order: SendRecvEvent
+metadata:
+  description: "进入房间"
+spec:
+  send:
+    eventRef: CEventVideoRoomEnterRoom
+  recv:
+    eventRefs:
+    - CEventVideoRoomEnterRoomRes
+
+---
+class: Action
+order: SendEvent
+metadata:
+  description: "退出房间"
+spec:
+  eventRef: CEventVideoRoomLeaveRoom
+
+---
+class: Action
+order: SendRecvEvent
+metadata:
+  description: "送礼"
+spec:
+  send:
+    eventRef: CEventVideoSendGift
+  recv:
+    eventRefs:
+    - CEventVideoSendGiftResult
+
+---
+class: Action
+order: SendEvent
+metadata:
+  description: "发心跳"
+spec:
+  eventRef: CEventVideoPlayerHeartBeatNotify
+
+---
+class: Action
+order: SendRecvEvent
+metadata:
+  description: "购买vip"
+spec:
+  send:
+    eventRef: CEventBuyVideoVip
+  recv:
+    eventRefs:
+    - CEventBuyVideoVipRes
+
+---
+class: Action
+order: SendRecvEvent
+metadata:
+  description: "抢座位"
+spec:
+  send:
+    eventRef: CEventTakeVipSeat
+  recv:
+    eventRefs:
+    - CEventTakeVipSeatRes
+
+
+# Events:
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/user_proxy/event/room_proxy_events.h
+spec:
+  eventName: CEventVideoInitConnectionRequest
+  params:
+  - field: roomID
+    type: Int
+    value:
+      fromPlayerData: "ROOM_ID"
+  - field: uid.account
+    type: LongLong
+    value:
+      expression: "robot.account()"
+  - field: uid.zoneid
+    type: Int
+    value:
+      fromPlayerData: "ZONE_ID"
+  - field: uid.channel
+    type: Symbol
+    value:
+      constant: "VCT_X5"
+  - field: logic_version
+    type: Symbol
+    value:
+      constant: "VIDEO_LOGIC_VERSION_NUM_CURRENT"
+
+---
+class: Event
+order: Response
+metadata:
+  include_headers:
+  - video_platform_impl/user_proxy/event/room_proxy_events.h
+spec:
+  eventName: CEventVideoInitConnectionResponse
+  errorCodeField: res
+  errorCategory: UserProxyResult
+  results:
+  - field: video_zone_id
+    key: ZONE_ID
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventVideoRoomEnterRoom
+  params:
+  - field: m_room_id
+    value:
+      fromPlayerData: "ROOM_ID"
+    type: Int
+  - field: m_nick
+    value:
+      expression: "robot.account()"
+  - field: m_source
+    value:
+      constant: "ERS_Normal"
+    type: Symbol
+  - field: m_gender
+    value:
+      constant: "0"
+    type: Int
+  - field: m_level
+    value:
+      constant: "0"
+    type: Int
+
+---
+class: Event
+order: Response
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventVideoRoomEnterRoomRes
+  errorCodeField: m_result
+  errorCategory: VideoRoomErrorCode
+  results:
+  - field: m_info.live_detail.anchor_pstid.id
+    key: ANCHOR_QQ
+  - field: m_info.vip_level
+    key: VIP_LEVEL
+  - field: m_info.vip_expire
+    key: VIP_EXPIRE
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventVideoRoomLeaveRoom
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/event_video_send_gift.h
+spec:
+  eventName: CEventVideoSendGift
+  params:
+  - field: m_gift_count
+    value:
+      constant: "1"
+    type: Int
+  - field: m_gift_id
+    value:
+      constant: "1"
+    type: Int
+---
+class: Event
+order: Response
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/event_video_send_gift.h
+spec:
+  eventName: CEventVideoSendGiftResult
+  errorCodeField: m_result
+  errorCategory: SendVideoGiftResult
+
+---
+class: Event
+order: Request
+metadata:
+  description: "心跳"
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventVideoPlayerHeartBeatNotify
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/modules/video_vip/shared/event/video_vip_event.h
+spec:
+  eventName: CEventBuyVideoVip
+  params:
+  - field: m_vip_level
+    value:
+      fromPlayerData: "BUY_VIP_LEVEL"
+    type: Int
+    description: "要购买的vip级别"
+  - field: m_duration
+    value:
+      fromPlayerData: "BUY_VIP_DUR"
+    type: Int
+  - field: m_buy_type
+    value:
+      constant: VVBT_Start
+    type: Symbol
+  - field: m_cost_type
+    value:
+      fromPlayerData: "BUY_VIP_COST_TYPE"
+    type: Int
+
+---
+class: Event
+order: Response
+metadata:
+  include_headers:
+  - video_platform_impl/modules/video_vip/shared/event/video_vip_event.h
+spec:
+  eventName: CEventBuyVideoVipRes
+  errorCodeField: m_ret
+  errorCategory: VideoVipOperationResult
+
+---
+class: Event
+order: Request
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventTakeVipSeat
+  params:
+  - field: m_seat_index
+    type: Int
+    value:
+      fromPlayerData: "CEventTakeVipSeat.m_seat_index"
+      default:
+        random:
+          from: 0
+          to: 5
+  - field: m_cost
+    type: Int
+    value:
+      fromPlayerData: "CEventTakeVipSeat.m_cost"
+      default: "0"
+---
+class: Event
+order: Response
+metadata:
+  include_headers:
+  - video_platform_impl/common/event/video_room_client_server_event.h
+spec:
+  eventName: CEventTakeVipSeatRes
+  errorCodeField: m_res
+  errorCategory: TakeSeatResult

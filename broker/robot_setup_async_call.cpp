@@ -10,7 +10,7 @@ public:
     RobotSetupAsyncCall(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 
     AsyncRequestMethod getRequestMethod() const override {
-        return &::Broker::AsyncService::RequestRobotSetup;
+        return &::CommonService::AsyncService::RequestRobotSetup;
     }
     
     void doReply() override {

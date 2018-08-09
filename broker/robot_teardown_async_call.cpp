@@ -8,7 +8,7 @@ public:
     RobotTeardownAsyncCall(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 
     AsyncRequestMethod getRequestMethod() const override {
-        return &::Broker::AsyncService::RequestRobotTeardown;
+        return &::CommonService::AsyncService::RequestRobotTeardown;
     }
 
     void doReply() override {

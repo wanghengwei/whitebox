@@ -19,7 +19,7 @@ public:
 protected:
 
     AsyncRequestMethod getRequestMethod() const override {
-        return &::Broker::AsyncService::RequestConnect;
+        return &::CommonService::AsyncService::RequestConnect;
     }
 
     AsyncCall* createNewInstance() override {

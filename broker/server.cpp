@@ -1,7 +1,6 @@
 #include "server.h"
 #include <fruit/fruit.h>
 #include <grpc++/grpc++.h>
-#include <x51.grpc.pb.h>
 
 class ServerImpl final : public Server {
 public:
@@ -16,7 +15,7 @@ public:
         m_server = m_builder.BuildAndStart();
     }
 
-    Broker::AsyncService& service() override {
+    CommonService::AsyncService& service() override {
         return m_broker;
     }
 
@@ -25,7 +24,7 @@ public:
     }
 
 private:
-    Broker::AsyncService m_broker;
+    CommonService::AsyncService m_broker;
     grpc::ServerBuilder m_builder;
     std::unique_ptr<grpc::ServerCompletionQueue> m_cq;
     std::unique_ptr<grpc::Server> m_server;

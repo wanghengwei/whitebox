@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.11)
 
+project(mgc)
+
 include(FetchContent)
 
+# 获取mgc的代码
 FetchContent_Declare(mgc
     SVN_REPOSITORY http://172.17.100.22/svn/starx52/video_platform
     SVN_USERNAME wanghengwei
@@ -12,7 +15,7 @@ if(NOT mgc_POPULATED)
     FetchContent_Populate(mgc)
 endif()
 
-set(MGC_SOURCES
+set(PROJECT_SOURCES
 video_platform_impl/share/game_event/EventFragmentManager.cpp
 video_platform_impl/common/event/room_proxy_wrap_events.cpp
 video_platform_impl/user_proxy/event/room_proxy_events.cpp
@@ -48,10 +51,11 @@ video_platform_impl/common/event/event_video_room.cpp
 video_platform_impl/common/event/video_personal_card_event_register.cpp
 )
 
-list(TRANSFORM MGC_SOURCES PREPEND "${mgc_SOURCE_DIR}/")
+# 拼接出绝对路径
+list(TRANSFORM PROJECT_SOURCES PREPEND "${mgc_SOURCE_DIR}/")
 
-# add_library(mgc ${MGC_SRC})
-set(MGC_INCLUDE_DIRS
+# 这是使用x51代码必须使用的include path
+set(PROJ_INCLUDE_DIRS
     ${mgc_SOURCE_DIR} 
     ${mgc_SOURCE_DIR}/share
     ${mgc_SOURCE_DIR}/video_platform_impl
@@ -65,5 +69,31 @@ set(MGC_INCLUDE_DIRS
 #         -Wno-deprecated-declarations
 # )
 
-set(MGC_SOURCES ${MGC_SOURCES} PARENT_SCOPE)
-set(MGC_INCLUDE_DIRS ${MGC_INCLUDE_DIRS} PARENT_SCOPE)
+# set(PROJECT_SOURCES ${PROJECT_SOURCES} PARENT_SCOPE)
+# set(MGC_INCLUDE_DIRS ${MGC_INCLUDE_DIRS} PARENT_SCOPE)
+
+# 获取broker公共代码
+FetchContent_Declare(broker_common
+    URL ${CMAKE_SOURCE_DIR}/../broker
+)
+FetchContent_GetProperties(broker_common)
+
+if (NOT broker_common_POPULATED)
+    FetchContent_Populate(broker_common)
+
+    # 添加 proto broker ，这是grpc生成的代码，包含 broker.grpc.pb.h 等
+    # 依赖 broker 里面的 common protos
+
+    add_subdirectory(${broker_common_SOURCE_DIR} ${broker_common_BINARY_DIR})
+endif()
+
+add_subdirectory(protos)
+
+add_subdirectory(autogen)
+
+add_executable(broker ${PROJECT_SOURCES})
+target_include_directories(broker PRIVATE ${PROJ_INCLUDE_DIRS})
+target_link_libraries(broker broker_common proto_broker autogen)
+target_compile_options(broker PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
+
+add_dependencies(proto_broker broker_common)

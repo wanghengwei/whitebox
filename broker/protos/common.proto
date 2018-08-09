@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+// package x51;
+option java_package = "com.tac.whitebox";
+
+message ConnectParams {
+    string address = 1;
+    uint32 port = 2;
+    ConnectionIdentity connectionId = 3;
+    string password = 4;
+}
+
+message Error {
+    // 表示成功或失败。用个bool而不是errorode的原因是，有的x51的错误码0表示失败，1表示成功，等等。
+    // 似乎有点多余？看看吧
+    // bool ok = 1;
+    // 错误码。对于x51，就是各种枚举值。对于机器人框架内部错误和系统错误，就是自定义的error code的值。
+    int32 errorCode = 1;
+    // 错误类型，对x51是枚举名
+    string errorCategory = 2;
+    // 额外的信息，动态信息。
+    string message = 3;
+}
+
+// 由于不能直接往oneof里面放map，因此包装一下
+message Data {
+    map<string, string> data = 1;
+}
+
+// 表示操作的结果
+// TODO 这里应当还有数据，不过还不知道具体怎么弄
+// 也许不再需要数据了？
+message Result {
+    oneof content {
+        Error error = 1;
+        Data data = 2;
+    }
+}
+
+// 唯一确定一个conn的标示类型
+message ConnectionIdentity {
+    string account = 1;
+    string service = 2;
+    uint32 index = 3;
+}
+
+// 表示发送消息的参数
+message EventRequestParams {
+    ConnectionIdentity connectionId = 1;
+    // 其它参数，比如roomid，用map传过去
+    map<string, string> data = 2;
+}
+
+// 初始化一个robot的参数
+message InitParams {
+    string account = 1;
+    map<string, string> playerData = 2;
+}
+
+// 销毁一个robot的参数
+message TeardownParams {
+    string account = 1;
+}
+
+service CommonService {
+    rpc RobotSetup (InitParams) returns (Error);
+
+    rpc RobotTeardown (TeardownParams) returns (Error);
+    
+    rpc Connect (ConnectParams) returns (Result);
+}

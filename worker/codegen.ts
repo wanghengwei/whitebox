@@ -9,10 +9,10 @@ add_library(autogen
 	{{ file }}
 	{% endfor %}
 )
-target_link_libraries(autogen proto fmt)
+target_link_libraries(autogen proto fmt broker_common)
 target_include_directories(autogen 
     INTERFACE \${CMAKE_CURRENT_SOURCE_DIR} 
-    PRIVATE \${MGC_INCLUDE_DIRS}
+    PRIVATE \${PROJ_INCLUDE_DIRS} \${PROTO_COMMON_INCLUDE_DIR}
 )
 target_compile_options(autogen
     PUBLIC
@@ -30,13 +30,6 @@ import "google/protobuf/empty.proto";
 import "common.proto";
 
 service Broker {
-
-    rpc RobotSetup (InitParams) returns (Error);
-
-    rpc RobotTeardown (TeardownParams) returns (Error);
-    
-    rpc Connect (ConnectParams) returns (Result);
-
     {% for action in actions %}
     rpc {{ action.fullName() }} (EventRequestParams) returns (Result);
     {% endfor %}
@@ -76,8 +69,8 @@ void init{{ event.fullName() }}({{ event.doc.spec.eventName }}& ev, const EventR
 
     EVENT_REQUEST_CPP_TEMPLATE: `
 #include "{{ event.headerFileName() }}"
-#include "../robot.h"
-#include "../errors.h"
+#include <robot.h>
+#include <errors.h>
 #include <boost/exception/all.hpp>
 #include <fmt/format.h>
 #include <boost/log/trivial.hpp>
@@ -137,7 +130,7 @@ void fillReplyBy{{ event.fullName() }}(const {{ event.eventName() }}& ev, Result
     ACTION_SENDRECVEVENT_HEADER_TEMPLATE: `
 #pragma once
 
-#include "../async_call.h"
+#include <async_call.h>
 
 class RobotManager;
 class Server;
@@ -158,13 +151,13 @@ AsyncCall* create{{ action.fullName() }}(Server&, RobotManager&);
 #include "{{ a.headerFileName() }}"
 {% endfor %}
 
-#include "../async_call_impl.h"
-#include "../robot_manager.h"
-#include "../robot.h"
-#include "../connection.h"
-#include "../errors.h"
+#include <async_call_impl.h>
+#include <robot_manager.h>
+#include <robot.h>
+#include <connection.h>
+#include <errors.h>
 #include <fmt/format.h>
-#include <x51.grpc.pb.h>
+#include <broker.grpc.pb.h>
 
 using namespace fmt::literals;
 
@@ -260,7 +253,7 @@ AsyncCall* create{{className}}(Server& svr, RobotManager& rm) {
     ACTION_SENDEVENT_HEADER_TEMPLATE: `
 #pragma once
 
-#include "../async_call.h"
+#include <async_call.h>
 
 class RobotManager;
 class Server;
@@ -276,13 +269,13 @@ AsyncCall* create{{ action.fullName() }}(Server&, RobotManager&);
 #include "{{ action.headerFileName() }}"
 #include "{{ action.event().headerFileName() }}"
 
-#include "../async_call_impl.h"
-#include "../robot_manager.h"
-#include "../robot.h"
-#include "../connection.h"
-#include "../errors.h"
+#include <async_call_impl.h>
+#include <robot_manager.h>
+#include <robot.h>
+#include <connection.h>
+#include <errors.h>
 #include <fmt/format.h>
-#include <x51.grpc.pb.h>
+#include <broker.grpc.pb.h>
 
 using namespace fmt::literals;
 
@@ -351,7 +344,7 @@ AsyncCall* create{{ className }}(Server& svr, RobotManager& rm) {
 ACTION_RECVEVENT_HEADER_TEMPLATE: `
 #pragma once
 
-#include "../async_call.h"
+#include <async_call.h>
 
 class RobotManager;
 class Server;
@@ -369,13 +362,13 @@ AsyncCall* create{{ action.fullName()}}(Server&, RobotManager&);
 #include "{{ e.headerFileName() }}"
 {% endfor %}
 
-#include "../async_call_impl.h"
-#include "../robot_manager.h"
-#include "../robot.h"
-#include "../connection.h"
-#include "../errors.h"
+#include <async_call_impl.h>
+#include <robot_manager.h>
+#include <robot.h>
+#include <connection.h>
+#include <errors.h>
 #include <fmt/format.h>
-#include <x51.grpc.pb.h>
+#include <broker.grpc.pb.h>
 
 using namespace fmt::literals;
 
@@ -462,19 +455,19 @@ function renderToFile(tpl: string, ctx: any, path: string) {
 
 renderToFile(templates.CMAKELISTS_TEMPLATE, {
     files: [].concat(actionManager.events.map(x => x.cppFileName()), actionManager.actions.map(x => x.cppFileName())),
-}, "../broker/autogen/CMakeLists.txt");
+}, "../mgc/autogen/CMakeLists.txt");
 
-renderToFile(templates.PROTO_TEMPLATE, { actions: actionManager.actions }, "../protos/x51.proto");
+renderToFile(templates.PROTO_TEMPLATE, { actions: actionManager.actions }, "../mgc/protos/broker.proto");
 
-renderToFile(templates.AUTOGEN_INIT_TEMPLATE, { actions: actionManager.actions }, "../broker/autogen/autogen_init.h");
+renderToFile(templates.AUTOGEN_INIT_TEMPLATE, { actions: actionManager.actions }, "../mgc/autogen/autogen_init.h");
 
 for (const e of actionManager.events) {
-    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_HEADER_TEMPLATE`], { event: e }, `../broker/autogen/${e.headerFileName()}`);
-    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_CPP_TEMPLATE`], { event: e, stringify: JSON.stringify }, `../broker/autogen/${e.cppFileName()}`);
+    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_HEADER_TEMPLATE`], { event: e }, `../mgc/autogen/${e.headerFileName()}`);
+    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_CPP_TEMPLATE`], { event: e, stringify: JSON.stringify }, `../mgc/autogen/${e.cppFileName()}`);
 }
 
 for (const act of actionManager.actions) {
-    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_HEADER_TEMPLATE`], { action: act }, `../broker/autogen/${act.headerFileName()}`);
-    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_CPP_TEMPLATE`], { action: act }, `../broker/autogen/${act.cppFileName()}`);
+    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_HEADER_TEMPLATE`], { action: act }, `../mgc/autogen/${act.headerFileName()}`);
+    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_CPP_TEMPLATE`], { action: act }, `../mgc/autogen/${act.cppFileName()}`);
 
 }

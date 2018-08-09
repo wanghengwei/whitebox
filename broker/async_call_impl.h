@@ -2,7 +2,7 @@
 #include "async_call.h"
 #include "server.h"
 // 
-#include <x51.grpc.pb.h>
+#include <common.grpc.pb.h>
 
 class AsyncCallFactory;
 
@@ -13,7 +13,7 @@ class AsyncCallFactory;
 template<typename SubClass, typename ParamType, typename ReturnType>
 class AsyncCallImpl : public AsyncCall {
 public:
-    using AsyncRequestMethod = void(Broker::AsyncService::*)(grpc::ServerContext*, ParamType*, grpc::ServerAsyncResponseWriter<ReturnType>*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
+    using AsyncRequestMethod = void(CommonService::AsyncService::*)(grpc::ServerContext*, ParamType*, grpc::ServerAsyncResponseWriter<ReturnType>*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
   
 public:
     explicit AsyncCallImpl(Server& svr) : m_svr{svr}, m_responder{&m_ctx} {}
@@ -44,7 +44,8 @@ protected:
     ReturnType& reply() { return m_reply; }
 
     Server& server() { return m_svr; }
-    Broker::AsyncService& service() { return m_svr.service(); }
+    CommonService::AsyncService& service() { return m_svr.service(); }
+    // ::grpc::Service& service() { return m_svr.service(); }
     grpc::ServerCompletionQueue& queue() { return m_svr.queue(); }
 
 

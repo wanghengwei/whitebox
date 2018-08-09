@@ -8,13 +8,12 @@
 #include "server.h"
 #include "robot_setup_async_call.h"
 #include "robot_teardown_async_call.h"
-#include <autogen_init.h>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-// 这里会变化
-#include <video_platform_impl/share/netengine/BiboFrame/BiboInterfaces.h>
+#include "logging.h"
+// #include <autogen_init.h>
 
 using namespace std::literals::chrono_literals;
+
+extern void initGRPCAsyncCalls(Server& svr, RobotManager& rm);
 
 class AppImpl final : public App {
 public:
@@ -29,19 +28,7 @@ public:
     {}
 
     int run() {
-        // 设置x51的log
-        // static const std::map<std::string, int> x51LevelMap = {
-        //     {"Debug2", 900},
-        //     {"Debug", 800},
-        //     {"Info", 700},
-        //     {"Error", 400},
-        //     {"Critical", 300},
-        //     {"Fatal", 200}
-        // };
-        GetLogInterface()->SetSystemPriority(700);
-        boost::log::core::get()->set_filter(
-            boost::log::trivial::severity >= boost::log::trivial::info
-        );
+        setLogLevel();
 
         m_server.start();
 

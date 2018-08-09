@@ -20,7 +20,7 @@ class LocalFileActionManager implements ActionManager {
     events: ev.Event[] = [];
 
     constructor() {
-        safeLoadAll(readFileSync("../actions.yaml").toString(), doc => {
+        safeLoadAll(readFileSync("../mgc/resources/actions.yaml").toString(), doc => {
             if (doc.class == 'Action') {
                 this.actions.push(new (action['Action' + doc.order])(doc));
             } else if (doc.class == 'Event') {
