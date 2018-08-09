@@ -2,6 +2,7 @@
 #include <fruit/fruit_forward_decls.h>
 #include <x51.grpc.pb.h>
 
+// 表示一个grpc server
 class Server {
 public:
     virtual ~Server() {}

@@ -1,6 +1,5 @@
 #include "app.h"
 #include <grpc++/grpc++.h>
-#include <autogen_init.h>
 #include <fruit/fruit.h>
 #include "async_call.h"
 #include "connector_manager.h"
@@ -9,9 +8,11 @@
 #include "server.h"
 #include "robot_setup_async_call.h"
 #include "robot_teardown_async_call.h"
-#include <video_platform_impl/share/netengine/BiboFrame/BiboInterfaces.h>
+#include <autogen_init.h>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+// 这里会变化
+#include <video_platform_impl/share/netengine/BiboFrame/BiboInterfaces.h>
 
 using namespace std::literals::chrono_literals;
 
@@ -44,27 +45,28 @@ public:
 
         m_server.start();
 
-        // 初始化 connect 的injector并生成 factory
+        // 初始化connect
         createConnectAsyncCall(m_server, m_connectorManager)->proceed();
 
+        // 初始化robot开始与清理的请求handler
         createRobotSetupAsyncCall(m_server, m_robotManager)->proceed();
         createRobotTeardownAsyncCall(m_server, m_robotManager)->proceed();
         
-        // m_asyncCallFactory.create<RobotTeardownAsyncCall>()->proceed();
-
+        // 初始化其它一堆自动生成的handler
         initGRPCAsyncCalls(m_server, m_robotManager);
 
         void* tag;
         bool ok;
 
         auto now = std::chrono::system_clock::now();
-        auto deadline = now + 100ms;
+        auto deadline = now;
 
         while (true) {
             deadline += 100ms;
 
+            // 在deadline前一直从cq里取任务执行，直到时间到为止（100毫秒）。
+            // 这里处理的应该都是doReply函数中的逻辑，一般是发消息、保存消息callback等事情。
             while (true) {
-                // 在deadline前一直取，直到时间到为止。
                 auto nst = m_server.queue().AsyncNext(&tag, &ok, deadline);
 
                 // 此时当前时间应当就是deadline
@@ -72,6 +74,7 @@ public:
 
                 if (nst == grpc::CompletionQueue::SHUTDOWN) {
                     // 不应该的情况
+                    // TODO log it
                     return 1;
                 } else if (nst == grpc::CompletionQueue::GOT_EVENT) {
                     AsyncCall* ac = static_cast<AsyncCall*>(tag);
@@ -82,6 +85,8 @@ public:
                 }
             }
 
+            // 处理x51/mgc的消息队列
+            // 这里一般是处理实际收到消息后处理callback的逻辑
             m_connectorManager.poll();
         }
 
@@ -91,9 +96,6 @@ private:
     Server& m_server;
     ConnectorManager& m_connectorManager;
     RobotManager& m_robotManager;
-    // AsyncService& m_asyncService;
-    // CompletionQueueComponent& m_completionQueueComponent;
-    // AsyncCallFactory& m_asyncCallFactory;
 };
 
 fruit::Component<App> getApp() {
@@ -102,8 +104,5 @@ fruit::Component<App> getApp() {
         .install(getRobotManager)
         .install(getConnectorManager)
         .install(getServerComponent)
-        // .install(getAsyncService)
-        // .install(getCompletionQueueComponent)
-        // .install(getAsyncCallFactory)
     ;
 }

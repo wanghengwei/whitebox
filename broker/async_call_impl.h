@@ -1,6 +1,7 @@
 #pragma once
 #include "async_call.h"
 #include "server.h"
+// 
 #include <x51.grpc.pb.h>
 
 class AsyncCallFactory;
@@ -17,20 +18,6 @@ public:
 public:
     explicit AsyncCallImpl(Server& svr) : m_svr{svr}, m_responder{&m_ctx} {}
         
-    // }
-    // explicit AsyncCallImpl(AsyncCallFactory& factory) : m_factory{factory}, m_responder{&m_ctx} {}
-
-    // void setRobotManager(RobotManager* m) {
-    //     this.m_robotManager = m;
-    // }
-
-    // void setConnectorManager(ConnectorManager* m) {
-    //     this.m_connectorManager = m;
-    // }
-
-    // AsyncCallImpl(AsyncCallImpl&) = delete;
-    // AsyncCallImpl& operator=(AsyncCallImpl&) = delete;
-
     void proceed() override {
         if (m_state == State::CREATE) {
             m_state = State::PROCESS;
@@ -88,9 +75,4 @@ private:
     grpc::ServerAsyncResponseWriter<ReturnType> m_responder;
 
     State m_state{State::CREATE};
-    
-    // components
-    // AsyncCallFactory& m_factory;
-    // ConnectorManager* m_connectorManager{};
-    // RobotManager* m_robotManager{};
 };
