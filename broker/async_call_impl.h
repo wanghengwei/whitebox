@@ -10,10 +10,10 @@ class AsyncCallFactory;
 // 方便各式各样的子类的辅助父类。子类可能有各种依赖需求，这是在此处无法决定的。比如有的需要依赖connector manager，有的依赖 robot manager。
 // 子类的变化点在于：1. 请求的grpc方法不一样；2. 真正处理逻辑的部分不一样。 3. 依赖不太一样
 // 每个子类互相没啥关系。生命周期是一个请求的开始等待到执行结束，不长不短。
-template<typename SubClass, typename ParamType, typename ReturnType>
+template<typename SubClass, typename ParamType, typename ReturnType, typename ServiceType = CommonService>
 class AsyncCallImpl : public AsyncCall {
 public:
-    using AsyncRequestMethod = void(CommonService::AsyncService::*)(grpc::ServerContext*, ParamType*, grpc::ServerAsyncResponseWriter<ReturnType>*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
+    using AsyncRequestMethod = void(ServiceType::AsyncService::*)(grpc::ServerContext*, ParamType*, grpc::ServerAsyncResponseWriter<ReturnType>*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
   
 public:
     explicit AsyncCallImpl(Server& svr) : m_svr{svr}, m_responder{&m_ctx} {}
@@ -44,7 +44,7 @@ protected:
     ReturnType& reply() { return m_reply; }
 
     Server& server() { return m_svr; }
-    CommonService::AsyncService& service() { return m_svr.service(); }
+    typename ServiceType::AsyncService& service() { return m_svr.service(); }
     // ::grpc::Service& service() { return m_svr.service(); }
     grpc::ServerCompletionQueue& queue() { return m_svr.queue(); }
 

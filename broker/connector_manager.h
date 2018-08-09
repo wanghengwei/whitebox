@@ -13,4 +13,4 @@ public:
     virtual Connector* findConnector(const std::string& serviceName) = 0;
 };
 
-fruit::Component<ConnectorManager> getConnectorManager();
+// fruit::Component<ConnectorManager> getConnectorManager();

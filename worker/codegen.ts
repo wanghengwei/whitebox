@@ -163,7 +163,7 @@ using namespace fmt::literals;
 
 {% set className = action.fullName() %}
 
-class {{ className }} : public AsyncCallImpl<{{ className }}, EventRequestParams, Result> {
+class {{ className }} : public AsyncCallImpl<{{ className }}, EventRequestParams, Result, Broker> {
 public:
 	{{ className }}(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 protected:
@@ -281,7 +281,7 @@ using namespace fmt::literals;
 
 {% set className = action.fullName() %}
 
-class {{ className }} : public AsyncCallImpl<{{ className }}, EventRequestParams, Result> {
+class {{ className }} : public AsyncCallImpl<{{ className }}, EventRequestParams, Result, Broker> {
 public:
 	{{ className }}(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 protected:
@@ -374,7 +374,7 @@ using namespace fmt::literals;
 
 {% set className = action.fullName() %}
 
-class {{ className }} : public AsyncCallImpl<{{ className }}, EventRequestParams, Result> {
+class {{ className }} : public AsyncCallImpl<{{ className }}, EventRequestParams, Result, Broker> {
 public:
 	{{ className }}(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 protected:

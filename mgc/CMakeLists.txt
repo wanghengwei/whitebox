@@ -14,7 +14,6 @@ FetchContent_GetProperties(mgc)
 if(NOT mgc_POPULATED)
     FetchContent_Populate(mgc)
 endif()
-
 set(PROJECT_SOURCES
 video_platform_impl/share/game_event/EventFragmentManager.cpp
 video_platform_impl/common/event/room_proxy_wrap_events.cpp
@@ -77,13 +76,8 @@ FetchContent_Declare(broker_common
     URL ${CMAKE_SOURCE_DIR}/../broker
 )
 FetchContent_GetProperties(broker_common)
-
 if (NOT broker_common_POPULATED)
     FetchContent_Populate(broker_common)
-
-    # 添加 proto broker ，这是grpc生成的代码，包含 broker.grpc.pb.h 等
-    # 依赖 broker 里面的 common protos
-
     add_subdirectory(${broker_common_SOURCE_DIR} ${broker_common_BINARY_DIR})
 endif()
 
@@ -93,7 +87,7 @@ add_subdirectory(autogen)
 
 add_executable(broker ${PROJECT_SOURCES})
 target_include_directories(broker PRIVATE ${PROJ_INCLUDE_DIRS})
-target_link_libraries(broker broker_common proto_broker autogen)
-target_compile_options(broker PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
+target_link_libraries(broker broker_common autogen)
+# target_compile_options(broker PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
 
-add_dependencies(proto_broker broker_common)
+# add_dependencies(proto_broker broker_common)

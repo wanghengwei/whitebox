@@ -85,11 +85,11 @@ private:
     RobotManager& m_robotManager;
 };
 
-fruit::Component<App> getApp() {
+fruit::Component<fruit::Required<ConnectorManager>, App> getApp() {
     return fruit::createComponent()
         .bind<App, AppImpl>()
         .install(getRobotManager)
-        .install(getConnectorManager)
+        // .install(getConnectorManager)
         .install(getServerComponent)
     ;
 }

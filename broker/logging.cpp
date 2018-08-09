@@ -2,7 +2,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 // 这里会变化
-#include <video_platform_impl/share/netengine/BiboFrame/BiboInterfaces.h>
+// #include <video_platform_impl/share/netengine/BiboFrame/BiboInterfaces.h>
 
 void setLogLevel() {
     // 设置x51的log
@@ -14,7 +14,7 @@ void setLogLevel() {
     //     {"Critical", 300},
     //     {"Fatal", 200}
     // };
-    GetLogInterface()->SetSystemPriority(700);
+    // GetLogInterface()->SetSystemPriority(700);
     boost::log::core::get()->set_filter(
         boost::log::trivial::severity >= boost::log::trivial::info
     );

@@ -21,4 +21,4 @@ add_library(proto_broker ${PROTO_SOURCES})
 target_include_directories(proto_broker INTERFACE ${CMAKE_CURRENT_BINARY_DIR} PRIVATE ${PROTO_COMMON_INCLUDE_DIR})
 
 # 这个目录是 broker protos 自动生成的头文件所在目录。 broker 模块需要
-set(PROTO_BROKER_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)
+# set(PROTO_BROKER_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)

@@ -17,8 +17,6 @@ target_include_directories(fruit INTERFACE ${INSTALL_DIR}/include)
 find_library(fruit_lib fruit HINTS ${INSTALL_DIR}/lib)
 message(${fruit_lib})
 target_link_libraries(fruit INTERFACE ${fruit_lib})
-# include_directories(${INSTALL_DIR}/include)
-# link_directories(${INSTALL_DIR}/lib)
 
 ## fmt
 FetchContent_Declare(fmt
@@ -59,25 +57,25 @@ add_library(broker_common
     main.cpp
     app.cpp
     errors.cpp
-    connector_impl.cpp
-    connector_manager.cpp
+    # connector_impl.cpp
+    # connector_manager.cpp
     server.cpp
     robot_manager.cpp
     connect_async_call.cpp
     robot_setup_async_call.cpp
     robot_teardown_async_call.cpp
-    connection_impl.cpp
+    # connection_impl.cpp
     robot.cpp
     logging.cpp
 
     ${PROTO_SOURCES}
 )
 target_link_libraries(broker_common grpc++_unsecure protobuf fruit dl pthread ${Boost_LIBRARIES} fmt)
-target_compile_options(broker_common PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
+# target_compile_options(broker_common PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
 # target_compile_definitions(broker PRIVATE BOOST_ALL_DYN_LINK)
 target_include_directories(broker_common 
-    PRIVATE 
-        ${PROJ_INCLUDE_DIRS}
+    PUBLIC 
+        # ${PROJ_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
     INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}
