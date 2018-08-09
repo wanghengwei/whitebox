@@ -24,3 +24,5 @@ CEventEncryptEvList 一个机器人收到这个event后，应该对这里面的e
 2. event有字段是个vector，需要能往里面push东西。
 
 如果运行时playerData里缺少字段，会立刻crash，需要改改 (google::protobuf::FatalException)
+
+要能同时支持x51和mgc
