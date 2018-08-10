@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { interval, Subject, zip, empty, from, concat, timer, of } from "rxjs";
 import { map, buffer, windowToggle, concatAll, windowCount, flatMap, ignoreElements } from "rxjs/operators";
 import { clearInterval, setInterval } from "timers";
-import broker from "./broker";
+import {brokerService} from "./broker";
 import { RestartError } from "./errors";
 import { Job } from "./job";
 import logger from "./logger";
@@ -56,7 +56,7 @@ class JobManagerImpl implements JobManager {
         this.events.on('roomEntered', (job, action, args) => {
             job.heartBeatTimer = setInterval(() => {
                 logger.info({ robot: args.connectionId.account }, "sendHearBeat");
-                broker.ActionSendEventCEventVideoPlayerHeartBeatNotify({ connectionId: args.connectionId }, (err, res) => {
+                brokerService.ActionSendEventCEventVideoPlayerHeartBeatNotify({ connectionId: args.connectionId }, (err, res) => {
                     if (err || res.error) {
                         // 如果发送心跳错误，那应该是连接被断开了。停止发心跳
                         logger.info({robot: args.connectionId.account}, "stopHearBeat");

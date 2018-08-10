@@ -65,8 +65,6 @@ protected:
 
     virtual void doReply() = 0;
 private:
-    // Broker::AsyncService& m_srv;
-    // grpc::ServerCompletionQueue& m_cq;
     ::Server& m_svr;
     grpc::ServerContext m_ctx;
     

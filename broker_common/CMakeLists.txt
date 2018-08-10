@@ -57,14 +57,10 @@ add_library(broker_common
     main.cpp
     app.cpp
     errors.cpp
-    # connector_impl.cpp
-    # connector_manager.cpp
-    # server.cpp
     robot_manager.cpp
     connect_async_call.cpp
     robot_setup_async_call.cpp
     robot_teardown_async_call.cpp
-    # connection_impl.cpp
     robot.cpp
     logging.cpp
 

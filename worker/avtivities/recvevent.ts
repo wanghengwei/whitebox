@@ -1,6 +1,6 @@
 import { SimpleActivity } from "./simple";
 import { Observable, bindNodeCallback } from "rxjs";
-import broker from "../broker";
+import * as broker from "../broker";
 import { map } from "rxjs/operators";
 import { ActionResult } from "../activity";
 import logger from "../logger";
@@ -30,7 +30,7 @@ export class RecvActionActivity extends SimpleActivity {
                 cb(err, res);
             };
 
-            broker[`ActionRecvEvent${this.event}`](arg, cb2);
+            broker.brokerService[`ActionRecvEvent${this.event}`](arg, cb2);
         };
         let args = {
             connectionId: {

@@ -27,6 +27,8 @@ public:
     }
 private:
     void init() {
+        GetLogInterface()->SetSystemPriority(700);
+        
         ConnectorParameters params;
 
         params.isTrusted = false;

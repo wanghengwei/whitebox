@@ -49,15 +49,11 @@ protected:
             e->set_errorcode(int(whitebox::errc::CONNECT_FAILED));
             e->set_errorcategory(whitebox::ERROR_CATEGORY);
             e->set_message(msg);
-            // m_responder.Finish(m_reply, grpc::Status::OK, this);
+
             finish();
 
             return;
         }
-
-        // 找到connector了，开始发起连接
-        // BOOST_LOG_TRIVIAL(info) << "Connect: addr=" << addr << ", port=" << port << ", acc=" << connId.account();
-        // BOOST_LOG_TRIVIAL(info) << "Connect: srv={}, addr={}, port={}, acc={}, idx={}"_format(connId.service(), addr, port, connId.account(), connId.connectionIndex());
 
         connector->connect(addr, port, connId.account(), pass, connId.index(), [this](std::shared_ptr<Connection> conn, const std::error_code& ec, const std::string& msg) {
             // 向grpc报告最终的结果
@@ -67,7 +63,7 @@ protected:
                 e->set_errorcategory(ec.category().name());
                 e->set_message(msg);
             }
-            // m_responder.Finish(m_reply, grpc::Status::OK, this);
+
             finish();
         });
     }

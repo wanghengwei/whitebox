@@ -4,6 +4,7 @@
 
 struct IEvent;
 
+// 表示一个连接。一个机器人可能会同时保存好几个连接
 class Connection {
 public:
     virtual ~Connection() {}

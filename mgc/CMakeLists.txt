@@ -88,7 +88,7 @@ add_subdirectory(autogen)
 # 最终的exe
 add_executable(broker 
     ${PROJECT_SOURCES} 
-    app_impl.cpp 
+    app.cpp 
     server_impl.cpp 
     connector_manager_impl.cpp
     connector_impl.cpp

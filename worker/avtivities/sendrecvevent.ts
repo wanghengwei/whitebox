@@ -1,7 +1,7 @@
 import { bindNodeCallback, Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { ActionResult } from "../activity";
-import broker from "../broker";
+import * as broker from "../broker";
 import logger from "../logger";
 import { SimpleActivity } from "./simple";
 import actionManager, { ActionOrder } from '../action_manager';
@@ -32,7 +32,7 @@ export class SendRecvEventActivity extends SimpleActivity {
                 cb(error, result);
             };
             // 注意这里要拼成完整名字：类型+name  
-            broker[`ActionSendRecvEvent${this.name}`](arg, cb2);
+            broker.brokerService[`ActionSendRecvEvent${this.name}`](arg, cb2);
         };
 
         // 设置调用rpc的参数

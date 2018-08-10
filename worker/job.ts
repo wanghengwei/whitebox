@@ -1,7 +1,7 @@
 import { bindNodeCallback, concat, Observable, Subject } from "rxjs";
 import { flatMap, ignoreElements, single } from "rxjs/operators";
 import { ActionResult } from "./activity";
-import broker from './broker';
+import {commonService} from './broker';
 import { JobTemplate } from "./job_template";
 import logger from "./logger";
 import { Robot } from "./robot";
@@ -59,7 +59,7 @@ export class Job {
 
                     cb(err, res);
                 };
-                broker.RobotSetup(args, cb2);
+                commonService.RobotSetup(args, cb2);
             } catch (e) {
                 logger.fatal({ exception: e }, "setupRobot FAILED");
                 throw e;
@@ -74,7 +74,7 @@ export class Job {
 
     teardownRobot() {
         logger.info({ account: this.robot.account }, `teardownRobot`);
-        broker.RobotTeardown({ account: this.robot.account }, (err, res) => {
+        commonService.RobotTeardown({ account: this.robot.account }, (err, res) => {
             if (err) {
                 logger.fatal({ grpc_error: err }, "teardownRobot FAILED");
             } else {

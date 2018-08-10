@@ -1,7 +1,7 @@
 import { bindNodeCallback, Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { ActionResult, Metadata } from "../activity";
-import broker from "../broker";
+import * as broker from "../broker";
 import logger from "../logger";
 import { Robot } from "../robot";
 import { SimpleActivity } from "./simple";
@@ -34,7 +34,7 @@ export class ConnectActionActivity extends SimpleActivity {
     let f = (args: any, cb: any) => {
       // let metadata = new ConnectMetadata(args);
       logger.info({ args }, "Connect");
-      broker.Connect(args, (error: any, result: any) => {
+      broker.commonService.Connect(args, (error: any, result: any) => {
         if (error) {
           logger.fatal({ grpc_error: error }, "Connect FAILED");
         } else if (result.error) {

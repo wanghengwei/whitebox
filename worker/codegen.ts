@@ -26,8 +26,6 @@ target_compile_definitions(autogen PUBLIC BOOST_ALL_DYN_LINK)
     PROTO_TEMPLATE: `
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 import "common.proto";
 
 service Broker {

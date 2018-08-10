@@ -2,14 +2,11 @@
 #include <grpc++/grpc++.h>
 #include <fruit/fruit.h>
 #include "async_call.h"
-#include "connector_manager.h"
 #include "robot_manager.h"
 #include "connect_async_call.h"
-#include "server.h"
 #include "robot_setup_async_call.h"
 #include "robot_teardown_async_call.h"
 #include "logging.h"
-// #include <autogen_init.h>
 
 using namespace std::literals::chrono_literals;
 
@@ -89,7 +86,5 @@ fruit::Component<fruit::Required<ConnectorManager, Server>, App> getApp() {
     return fruit::createComponent()
         .bind<App, AppImpl>()
         .install(getRobotManager)
-        // .install(getConnectorManager)
-        // .install(getServerComponent)
     ;
 }
