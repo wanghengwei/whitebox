@@ -4,9 +4,11 @@
 #include "errors.h"
 #include "connector.h"
 #include "logging.h"
+#include "server.h"
+#include <common.grpc.pb.h>
 
 // 用于连接服务器的异步操作
-class ConnectAsyncCall final : public AsyncCallImpl<ConnectAsyncCall, ConnectParams, Result> {
+class ConnectAsyncCall final : public AsyncCallImpl<ConnectAsyncCall, ConnectParams, Result, CommonService> {
 public:
     ConnectAsyncCall(
         Server& svr,

@@ -1,9 +1,11 @@
 #include "robot_teardown_async_call.h"
 #include "async_call_impl.h"
 #include "robot_manager.h"
+#include "server.h"
+#include <common.grpc.pb.h>
 // #include <boost/log/trivial.hpp>
 
-class RobotTeardownAsyncCall final : public AsyncCallImpl<RobotTeardownAsyncCall, TeardownParams, Error> {
+class RobotTeardownAsyncCall final : public AsyncCallImpl<RobotTeardownAsyncCall, TeardownParams, Error, CommonService> {
 public:
     RobotTeardownAsyncCall(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 

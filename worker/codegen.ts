@@ -5,11 +5,12 @@ import { writeFileSync } from 'fs';
 const templates = {
     CMAKELISTS_TEMPLATE: `
 add_library(autogen
+	autogen_init.cpp
 	{% for file in files %}
 	{{ file }}
 	{% endfor %}
 )
-target_link_libraries(autogen proto fmt broker_common)
+target_link_libraries(autogen proto_broker fmt broker_common)
 target_include_directories(autogen 
     INTERFACE \${CMAKE_CURRENT_SOURCE_DIR} 
     PRIVATE \${PROJ_INCLUDE_DIRS} \${PROTO_COMMON_INCLUDE_DIR}
@@ -38,7 +39,6 @@ service Broker {
 `,
 
     AUTOGEN_INIT_TEMPLATE: `
-#pragma once
 {% for action in actions %}
 #include "{{ action.headerFileName() }}"
 {% endfor %}
@@ -459,7 +459,7 @@ renderToFile(templates.CMAKELISTS_TEMPLATE, {
 
 renderToFile(templates.PROTO_TEMPLATE, { actions: actionManager.actions }, "../mgc/protos/broker.proto");
 
-renderToFile(templates.AUTOGEN_INIT_TEMPLATE, { actions: actionManager.actions }, "../mgc/autogen/autogen_init.h");
+renderToFile(templates.AUTOGEN_INIT_TEMPLATE, { actions: actionManager.actions }, "../mgc/autogen/autogen_init.cpp");
 
 for (const e of actionManager.events) {
     renderToFile(templates[`EVENT_${e.order().toUpperCase()}_HEADER_TEMPLATE`], { event: e }, `../mgc/autogen/${e.headerFileName()}`);

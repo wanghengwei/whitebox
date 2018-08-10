@@ -85,9 +85,17 @@ add_subdirectory(protos)
 
 add_subdirectory(autogen)
 
-add_executable(broker ${PROJECT_SOURCES})
+# 最终的exe
+add_executable(broker 
+    ${PROJECT_SOURCES} 
+    app_impl.cpp 
+    server_impl.cpp 
+    connector_manager_impl.cpp
+    connector_impl.cpp
+    connection_impl.cpp
+)
 target_include_directories(broker PRIVATE ${PROJ_INCLUDE_DIRS})
 target_link_libraries(broker broker_common autogen)
-# target_compile_options(broker PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
+target_compile_options(broker PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
 
 # add_dependencies(proto_broker broker_common)

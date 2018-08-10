@@ -59,7 +59,7 @@ add_library(broker_common
     errors.cpp
     # connector_impl.cpp
     # connector_manager.cpp
-    server.cpp
+    # server.cpp
     robot_manager.cpp
     connect_async_call.cpp
     robot_setup_async_call.cpp
@@ -72,7 +72,7 @@ add_library(broker_common
 )
 target_link_libraries(broker_common grpc++_unsecure protobuf fruit dl pthread ${Boost_LIBRARIES} fmt)
 # target_compile_options(broker_common PRIVATE -Wno-format -Wno-deprecated-declarations -include limits.h)
-# target_compile_definitions(broker PRIVATE BOOST_ALL_DYN_LINK)
+target_compile_definitions(broker_common PUBLIC BOOST_ALL_DYN_LINK)
 target_include_directories(broker_common 
     PUBLIC 
         # ${PROJ_INCLUDE_DIRS}

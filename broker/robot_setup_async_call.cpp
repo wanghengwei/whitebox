@@ -1,11 +1,13 @@
 #include "robot_setup_async_call.h"
 #include "async_call_impl.h"
 #include "robot_manager.h"
+#include "server.h"
 #include <boost/log/trivial.hpp>
 #include <fmt/format.h>
+#include <common.grpc.pb.h>
 using namespace fmt::literals;
 
-class RobotSetupAsyncCall final : public AsyncCallImpl<RobotSetupAsyncCall, InitParams, Error> {
+class RobotSetupAsyncCall final : public AsyncCallImpl<RobotSetupAsyncCall, InitParams, Error, CommonService> {
 public:
     RobotSetupAsyncCall(Server& svr, RobotManager& rm) : AsyncCallImpl{svr}, m_robotManager{rm} {}
 

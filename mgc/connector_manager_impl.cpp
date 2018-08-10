@@ -47,7 +47,7 @@ private:
     RobotManager& m_robotManager;
 };
 
-fruit::Component<ConnectorManager> getConnectorManager() {
+fruit::Component<ConnectorManager> getConnectorManagerComponent() {
     return fruit::createComponent()
         .bind<ConnectorManager, ConnectorManagerImpl>()
         .install(getRobotManager)

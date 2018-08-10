@@ -2,7 +2,7 @@
 #include "async_call.h"
 #include "server.h"
 // 
-#include <common.grpc.pb.h>
+// #include <common.grpc.pb.h>
 
 class AsyncCallFactory;
 
@@ -10,7 +10,7 @@ class AsyncCallFactory;
 // 方便各式各样的子类的辅助父类。子类可能有各种依赖需求，这是在此处无法决定的。比如有的需要依赖connector manager，有的依赖 robot manager。
 // 子类的变化点在于：1. 请求的grpc方法不一样；2. 真正处理逻辑的部分不一样。 3. 依赖不太一样
 // 每个子类互相没啥关系。生命周期是一个请求的开始等待到执行结束，不长不短。
-template<typename SubClass, typename ParamType, typename ReturnType, typename ServiceType = CommonService>
+template<typename SubClass, typename ParamType, typename ReturnType, typename ServiceType>
 class AsyncCallImpl : public AsyncCall {
 public:
     using AsyncRequestMethod = void(ServiceType::AsyncService::*)(grpc::ServerContext*, ParamType*, grpc::ServerAsyncResponseWriter<ReturnType>*, grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
@@ -43,14 +43,14 @@ protected:
     const ParamType &request() const { return m_request; }
     ReturnType& reply() { return m_reply; }
 
-    Server& server() { return m_svr; }
-    typename ServiceType::AsyncService& service() { return m_svr.service(); }
-    // ::grpc::Service& service() { return m_svr.service(); }
+    ::Server& server() { return m_svr; }
+
     grpc::ServerCompletionQueue& queue() { return m_svr.queue(); }
 
 
     void doRequest() {
-        (service().*getRequestMethod())(&m_ctx, &m_request, &m_responder, &queue(), &queue(), this);
+        typename ServiceType::AsyncService& srv = m_svr.getService<ServiceType>();
+        (srv.*getRequestMethod())(&m_ctx, &m_request, &m_responder, &queue(), &queue(), this);
     }
 
     void finish() {
@@ -67,7 +67,7 @@ protected:
 private:
     // Broker::AsyncService& m_srv;
     // grpc::ServerCompletionQueue& m_cq;
-    Server& m_svr;
+    ::Server& m_svr;
     grpc::ServerContext m_ctx;
     
     // 参数和返回值
