@@ -73,7 +73,7 @@ set(PROJ_INCLUDE_DIRS
 
 # 获取broker公共代码
 FetchContent_Declare(broker_common
-    URL ${CMAKE_SOURCE_DIR}/../broker
+    URL ${CMAKE_SOURCE_DIR}/../broker_common
 )
 FetchContent_GetProperties(broker_common)
 if (NOT broker_common_POPULATED)
