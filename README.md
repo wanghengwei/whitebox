@@ -14,9 +14,6 @@ CEventEncryptEvList 一个机器人收到这个event后，应该对这里面的e
 可能需要吧接受job和控制job执行的功能模块分开
 或者，job receiver慢慢的接收任务
 
-超时怎么做？
-等待event的都应该有超时。
-
 是不是可以让用户加入一些自定义的函数，比如 `bool isVIP(Robot& robot)` 这种，可以让用户在action的定义的 condition 之类地方调用
 
 以下两种情况要考虑：
@@ -25,4 +22,4 @@ CEventEncryptEvList 一个机器人收到这个event后，应该对这里面的e
 
 如果运行时playerData里缺少字段，会立刻crash，需要改改 (google::protobuf::FatalException)
 
-要能同时支持x51和mgc
+看看怎么加预编译头

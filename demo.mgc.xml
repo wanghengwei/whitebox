@@ -2,17 +2,17 @@
 <test_case>
     <template>
         <!-- <action type="echo" message="Start..."/> -->
-        <action type="connect" service="Game" conn="0"/>
+        <action type="connect" service="User" conn="0"/>
 
-        <!-- <action type="SendRecvEvent" name="CEventVideoInitConnectionRequest" service="User" conn="0"/> -->
+        <action type="SendRecvEvent" name="CEventVideoInitConnectionRequest" service="User" conn="0"/>
 
-        <!-- <action type="SendRecvEvent" name="CEventVideoRoomEnterRoom" service="User" conn="0"/> -->
+        <action type="SendRecvEvent" name="CEventVideoRoomEnterRoom" service="User" conn="0"/>
 
-        <!-- <action type="SendRecvEvent" name="CEventBuyVideoVip" service="User" conn="0"/> -->
+        <action type="SendRecvEvent" name="CEventBuyVideoVip" service="User" conn="0"/>
 
-        <!-- <action type="SendRecvEvent" name="CEventVideoSendGift" service="User" conn="0"/> -->
+        <action type="SendRecvEvent" name="CEventVideoSendGift" service="User" conn="0"/>
 
-        <!-- <action type="SendEvent" name="CEventVideoRoomLeaveRoom" service="User" conn="0"/> -->
+        <action type="SendEvent" name="CEventVideoRoomLeaveRoom" service="User" conn="0"/>
 
         <!-- <action type="connect" service="Video" conn="0"/> -->
 

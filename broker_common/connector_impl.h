@@ -10,6 +10,14 @@ class ConnectorImpl : public Connector, CClientBase, IEventDispatcher {
 public:
     ConnectorImpl(IEventSelector *selector, const ConnectorParameters& params, const std::string& srv, RobotManager& robotManager);
 
+    void init() override {
+        CClientBase::SetEventDispatcher(this);
+        INetInterface::net_config_t cfg = GetNetInterface()->GetConfig();
+        cfg.m_max_conn_per_IP = 30000;
+        cfg.m_skip_handshake = m_params.skipHandshake ? 1 : 0;
+        GetNetInterface()->SetConfig(cfg);
+    }
+
     void connect(const std::string& addr, uint16_t port, const std::string& acc, const std::string& pass, int idx, ConnectCallback&&) override;
 protected:
     void OnNewLink(IEventLink *newlink) override;
@@ -44,15 +52,7 @@ inline ConnectorImpl::ConnectorImpl(IEventSelector *selector, const ConnectorPar
         false, 
         PT_POLLING, 
         IO_MAX_CONNECTION
-    ), m_serviceName{srv}, m_robotManager{robotManager}, m_params{params} {
-        CClientBase::SetEventDispatcher(this);
-
-        INetInterface::net_config_t cfg = GetNetInterface()->GetConfig();
-        cfg.m_max_conn_per_IP = 30000;
-        cfg.m_skip_handshake = params.skipHandshake ? 1 : 0;
-
-        GetNetInterface()->SetConfig(cfg);
-    }
+    ), m_serviceName{srv}, m_robotManager{robotManager}, m_params{params} {}
 
 inline void ConnectorImpl::connect(const std::string& addr, uint16_t port, const std::string& acc, const std::string& pass, int idx, ConnectCallback&& cb) {
     BOOST_LOG_TRIVIAL(info) << "Connect: srv={}, addr={}, port={}, acc={}, idx={}"_format(m_serviceName, addr, port, acc, idx);

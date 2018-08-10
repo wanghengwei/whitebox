@@ -18,5 +18,8 @@ class Connector {
 public:
     virtual ~Connector() {}
 
+    // 应该在初始化完毕后调用一次
+    virtual void init() = 0;
+
     virtual void connect(const std::string& addr, uint16_t port, const std::string& acc, const std::string& pass, int idx, ConnectCallback&&) = 0;
 };

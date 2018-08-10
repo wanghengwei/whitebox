@@ -16,12 +16,16 @@ private:
         params.isTrusted = false;
         params.skipHandshake = false;
         params.shouldWrap = true;
-        m_connectors["User"] = std::make_shared<MGCConnector>(m_es, params, "User", m_robotManager);
+        auto uc = std::make_shared<MGCConnector>(m_es, params, "User", m_robotManager);
+        uc->init();
+        m_connectors["User"] = uc;
 
         params.isTrusted = true;
         params.skipHandshake = true;
         params.shouldWrap = false;
-        m_connectors["Video"] = std::make_shared<MGCConnector>(m_es, params, "Video", m_robotManager);
+        auto vc = std::make_shared<MGCConnector>(m_es, params, "Video", m_robotManager);
+        vc->init();
+        m_connectors["Video"] = vc;
     }
 };
 

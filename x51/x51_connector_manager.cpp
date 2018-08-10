@@ -15,13 +15,10 @@ private:
 
         params.isTrusted = false;
         params.skipHandshake = false;
-        params.shouldWrap = true;
-        m_connectors["User"] = std::make_shared<X51Connector>(m_es, params, "User", m_robotManager);
-
-        params.isTrusted = true;
-        params.skipHandshake = true;
         params.shouldWrap = false;
-        m_connectors["Video"] = std::make_shared<X51Connector>(m_es, params, "Video", m_robotManager);
+        auto c = std::make_shared<X51Connector>(m_es, params, "Game", m_robotManager);
+        c->init();
+        m_connectors["Game"] = c;
     }
 };
 

@@ -21,7 +21,7 @@ target_compile_options(autogen
     PUBLIC
         -Wno-deprecated-declarations
 )
-target_compile_definitions(autogen PUBLIC BOOST_ALL_DYN_LINK)
+target_compile_definitions(autogen PUBLIC BOOST_ALL_DYN_LINK STAR_SERVER _SERVER_INVERTORY_SYS)
 	
 `,
 

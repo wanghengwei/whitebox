@@ -27,7 +27,7 @@ protected:
     
 private:
     void init() override {
-        GetLogInterface()->SetSystemPriority(700);
+        // GetLogInterface()->SetSystemPriority(700);
         
         registerServices();
     }
