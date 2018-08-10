@@ -3,6 +3,8 @@ import { safeLoadAll } from 'js-yaml';
 import * as action from "./action";
 import * as ev from './event';
 
+const PROJ_NAME = process.env.PROJ || "mgc";
+
 // 用来提供event的信息。信息来自于解析yml定义。
 // yml哪里来……还不知道，目前就从本地文件读。
 interface ActionManager {
@@ -20,7 +22,7 @@ class LocalFileActionManager implements ActionManager {
     events: ev.Event[] = [];
 
     constructor() {
-        safeLoadAll(readFileSync("../mgc/resources/actions.yaml").toString(), doc => {
+        safeLoadAll(readFileSync(`../${PROJ_NAME}/resources/actions.yaml`).toString(), doc => {
             if (doc.class == 'Action') {
                 this.actions.push(new (action['Action' + doc.order])(doc));
             } else if (doc.class == 'Event') {

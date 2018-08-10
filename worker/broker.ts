@@ -1,6 +1,8 @@
 import grpc from 'grpc';
 import * as protoLoader from '@grpc/proto-loader';
 
+const PROJ_NAME = process.env.PROJ || "mgc";
+
 const PROTO_PATH = `broker.proto`;
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -9,7 +11,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
     // enums: String,
     // defaults: true,
     // oneofs: true,
-    includeDirs: [`${__dirname}/../mgc/protos`, `${__dirname}/../broker_common/protos`],
+    includeDirs: [`${__dirname}/../${PROJ_NAME}/protos`, `${__dirname}/../broker_common/protos`],
 });
 const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
 

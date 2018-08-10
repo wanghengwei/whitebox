@@ -2,6 +2,8 @@ import { configure, renderString, render } from 'nunjucks';
 import actionManager, { EventOrder, ActionOrder } from './action_manager';
 import { writeFileSync } from 'fs';
 
+const PROJ_NAME = process.env.PROJ || "mgc";
+
 const templates = {
     CMAKELISTS_TEMPLATE: `
 add_library(autogen
@@ -453,19 +455,19 @@ function renderToFile(tpl: string, ctx: any, path: string) {
 
 renderToFile(templates.CMAKELISTS_TEMPLATE, {
     files: [].concat(actionManager.events.map(x => x.cppFileName()), actionManager.actions.map(x => x.cppFileName())),
-}, "../mgc/autogen/CMakeLists.txt");
+}, `../${PROJ_NAME}/autogen/CMakeLists.txt`);
 
-renderToFile(templates.PROTO_TEMPLATE, { actions: actionManager.actions }, "../mgc/protos/broker.proto");
+renderToFile(templates.PROTO_TEMPLATE, { actions: actionManager.actions }, `../${PROJ_NAME}/protos/broker.proto`);
 
-renderToFile(templates.AUTOGEN_INIT_TEMPLATE, { actions: actionManager.actions }, "../mgc/autogen/autogen_init.cpp");
+renderToFile(templates.AUTOGEN_INIT_TEMPLATE, { actions: actionManager.actions }, `../${PROJ_NAME}/autogen/autogen_init.cpp`);
 
 for (const e of actionManager.events) {
-    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_HEADER_TEMPLATE`], { event: e }, `../mgc/autogen/${e.headerFileName()}`);
-    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_CPP_TEMPLATE`], { event: e, stringify: JSON.stringify }, `../mgc/autogen/${e.cppFileName()}`);
+    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_HEADER_TEMPLATE`], { event: e }, `../${PROJ_NAME}/autogen/${e.headerFileName()}`);
+    renderToFile(templates[`EVENT_${e.order().toUpperCase()}_CPP_TEMPLATE`], { event: e, stringify: JSON.stringify }, `../${PROJ_NAME}/autogen/${e.cppFileName()}`);
 }
 
 for (const act of actionManager.actions) {
-    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_HEADER_TEMPLATE`], { action: act }, `../mgc/autogen/${act.headerFileName()}`);
-    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_CPP_TEMPLATE`], { action: act }, `../mgc/autogen/${act.cppFileName()}`);
+    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_HEADER_TEMPLATE`], { action: act }, `../${PROJ_NAME}/autogen/${act.headerFileName()}`);
+    renderToFile(templates[`ACTION_${act.order().toUpperCase()}_CPP_TEMPLATE`], { action: act }, `../${PROJ_NAME}/autogen/${act.cppFileName()}`);
 
 }

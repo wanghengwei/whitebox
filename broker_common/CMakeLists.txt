@@ -7,16 +7,17 @@ include(FetchContent)
 ## fruit
 ExternalProject_Add(ep_fruit
     URL http://dl.tac.com/libs/fruit/v3.1.1.zip
-    SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/fruit-src
-    INSTALL_DIR ${CMAKE_BINARY_DIR}/_deps/fruit
+    # SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/fruit-src
+    INSTALL_DIR ${CMAKE_BINARY_DIR}/_stage
     CMAKE_ARGS -DCMAKE_BUILD_TYPE=$<CONFIG> -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DBUILD_SHARED_LIBS=OFF
 )
 ExternalProject_Get_Property(ep_fruit INSTALL_DIR)
-add_library(fruit INTERFACE IMPORTED)
-target_include_directories(fruit INTERFACE ${INSTALL_DIR}/include)
-find_library(fruit_lib fruit HINTS ${INSTALL_DIR}/lib)
-message(${fruit_lib})
-target_link_libraries(fruit INTERFACE ${fruit_lib})
+# 实在不好处理，就约定用 _stage 作为安装目录把
+# add_library(fruit INTERFACE IMPORTED)
+# target_include_directories(fruit INTERFACE ${INSTALL_DIR}/include)
+# # find_library(fruit_lib fruit HINTS ${INSTALL_DIR}/lib)
+# # message(${fruit_lib})
+# target_link_libraries(fruit INTERFACE ${INSTALL_DIR}/lib/libfruit.a)
 
 ## fmt
 FetchContent_Declare(fmt
@@ -76,3 +77,6 @@ target_include_directories(broker_common
     INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# fruit 必须优先编译好
+add_dependencies(broker_common ep_fruit)

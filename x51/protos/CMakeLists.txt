@@ -1,6 +1,8 @@
 # 必须在添加此子目录前设置好变量 PROTO_COMMON_PROTO_DIR ，指向 broker里面的 common protos 目录
 # 还必须设置 PROTO_COMMON_INCLUDE_DIR 
 
+# 这个文件和mgc的一模一样，考虑弄个公共的
+
 set(PROTO_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/broker.grpc.pb.cc
     ${CMAKE_CURRENT_BINARY_DIR}/broker.grpc.pb.h
@@ -18,7 +20,7 @@ add_custom_command(OUTPUT ${PROTO_SOURCES}
 )
 
 add_library(proto_broker ${PROTO_SOURCES})
-target_include_directories(proto_broker INTERFACE ${CMAKE_CURRENT_BINARY_DIR} PRIVATE ${PROTO_COMMON_INCLUDE_DIR})
+target_include_directories(proto_broker INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(proto_broker proto_common)
 
 # 这个目录是 broker protos 自动生成的头文件所在目录。 broker 模块需要
