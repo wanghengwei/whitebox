@@ -8,6 +8,8 @@ class ConnectorManager {
 public:
     virtual ~ConnectorManager() {}
 
+    virtual void init() = 0;
+
     virtual void poll() = 0;
 
     virtual Connector* findConnector(const std::string& serviceName) = 0;

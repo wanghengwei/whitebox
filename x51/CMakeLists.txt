@@ -119,10 +119,10 @@ add_subdirectory(autogen)
 add_executable(broker 
     ${PROJ_SOURCES} 
     app.cpp 
-    server_impl.cpp 
-    connector_manager_impl.cpp
-    connector_impl.cpp
-    connection_impl.cpp
+    x51_server.cpp 
+    x51_connector_manager.cpp
+    x51_connector.cpp
+    x51_connection.cpp
 
     QuestTemplate.cpp
 )

@@ -27,6 +27,9 @@ public:
     int run() {
         setLogLevel();
 
+        m_server.init();
+        m_connectorManager.init();
+
         m_server.start();
 
         // 初始化connect

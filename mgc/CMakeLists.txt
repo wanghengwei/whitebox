@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.11)
 
 project(mgc)
 
+# global settings
+include_directories(${CMAKE_BINARY_DIR}/_stage/include)
+link_directories(${CMAKE_BINARY_DIR}/_stage/lib)
+
 include(FetchContent)
 
 # 获取mgc的代码
@@ -89,10 +93,14 @@ add_subdirectory(autogen)
 add_executable(broker 
     ${PROJECT_SOURCES} 
     app.cpp 
-    server_impl.cpp 
-    connector_manager_impl.cpp
-    connector_impl.cpp
-    connection_impl.cpp
+    # server_impl.cpp 
+    # connector_manager_impl.cpp
+    # connector_impl.cpp
+    # connection_impl.cpp
+    mgc_server.cpp
+    mgc_connector_manager.cpp
+    mgc_connector.cpp
+    mgc_connection.cpp
 )
 target_include_directories(broker PRIVATE ${PROJ_INCLUDE_DIRS})
 target_link_libraries(broker broker_common autogen)

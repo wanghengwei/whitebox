@@ -10,6 +10,9 @@ class Server {
 public:
     virtual ~Server() {}
 
+    // 应该在start前尽早调一下
+    virtual void init() = 0;
+
     virtual void start() = 0;
 
     // todo 以后不一定只有1、2个service，而且类型在这里也无法确定，可能必须得用父类型作为返回值了。
